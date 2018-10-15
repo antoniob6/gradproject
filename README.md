@@ -2,7 +2,7 @@
 a procedurally generated 2d video game
 
 ### project managment Trello
-https://trello.com/b/rqCxmav6/untitled-board
+https://trello.com/b/rqCxmav6/
 
 ### github project managment
 https://github.com/antoniob6/gradproject/projects/1
