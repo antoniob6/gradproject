@@ -17,3 +17,6 @@ there will be a link to current unity project code repository.
 code will also be uploaded to this github repository.
 
 https://github.com/antoniob6/gradproject/tree/master/code
+
+### WIKI
+https://github.com/antoniob6/gradproject/wiki
