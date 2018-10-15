@@ -1,22 +1,22 @@
 # gradproject
 a procedurally generated 2d video game
 
-### project managment Trello
+### Trello project managment
 https://trello.com/b/rqCxmav6/
 
-### github project managment
+### Github project managment
 https://github.com/antoniob6/gradproject/projects/1
 
 
-### diary on github 
+### Diary on github 
 https://github.com/antoniob6/gradproject/tree/master/diary
 
 
-### repository
+### Repository
 there will be a link to current unity project code repository.
 code will also be uploaded to this github repository.
 
 https://github.com/antoniob6/gradproject/tree/master/code
 
-### WIKI
+### Wiki
 https://github.com/antoniob6/gradproject/wiki
