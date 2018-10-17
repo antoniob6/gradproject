@@ -1,6 +1,8 @@
 # gradproject
 a procedurally generated 2d video game
 
+![welcome](https://github.com/antoniob6/gradproject/blob/master/resources/images/welcomeImage.png)
+
 ### Trello project managment
 https://trello.com/b/rqCxmav6/
 
