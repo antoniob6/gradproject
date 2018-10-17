@@ -3,6 +3,9 @@ a procedurally generated 2d video game
 
 ![welcome](https://github.com/antoniob6/gradproject/blob/master/resources/images/welcomeImage.png)
 
+### Reports folder
+https://drive.google.com/drive/folders/1rO5JPf0PHS8Vre9ltrGWXKZjQnhJe_HD?usp=sharing
+
 ### Trello project managment
 https://trello.com/b/rqCxmav6/
 
