@@ -1,6 +1,6 @@
 WindowsStandalone
 PlayerPath?
-C:/Users/antonio/Desktop/unity/multiplayer2d/builds/procedural game.exe
+C:/Users/antonio/Desktop/gradproject/code/multiplayer2d/builds/procedural game.exe
 SceneListBegin?
 Assets/Scenes/tilesFox.unity
 SceneListEnd?
