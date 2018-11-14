@@ -6,15 +6,12 @@ a procedurally generated 2d video game
 ### Reports folder
 https://drive.google.com/drive/folders/1rO5JPf0PHS8Vre9ltrGWXKZjQnhJe_HD?usp=sharing
 
-### Trello project managment
-https://trello.com/b/rqCxmav6/
-
 ### Github project managment
 https://github.com/antoniob6/gradproject/projects/1
 
 
 ### Diary on github 
-https://github.com/antoniob6/gradproject/tree/master/diary
+https://github.com/antoniob6/gradproject/projects/1
 
 
 ### Repository
