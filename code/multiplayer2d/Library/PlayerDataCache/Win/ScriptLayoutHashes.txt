@@ -2,7 +2,7 @@ WindowsStandalone
 PlayerPath?
 C:/Users/antonio/Desktop/gradproject/code/multiplayer2d/builds/procedural game.exe
 SceneListBegin?
-Assets/Scenes/tilesFox.unity
+Assets/Scenes/tilesFoxcamera.unity
 SceneListEnd?
 c422dd62785a6d0afa870fbd111886ce Unity.TextMeshPro.dll:TMPro.TMP_SelectionCaret
 7b803eb2910e9b4cd5e521ae07b9f7d6 Unity.TextMeshPro.dll:TMPro.TMP_Dropdown
@@ -168,3 +168,4 @@ e04611b8715e6833d2bd7010fc6be10b Unity.TextMeshPro.dll:TMPro.TMP_StyleSheet
 9318334b30e9f195f573b2ce00154b95 Unity.TextMeshPro.dll:TMPro.TMP_ColorGradient
 93307bd34e39d73fd24e00ec39c25a91 Unity.TextMeshPro.dll:TMPro.TMP_SubMesh
 34a92d1602ac8aebb1197013414923e8 Assembly-CSharp.dll:.CharacterController2D
+a001a36feaa8a0993a91bdaad466a3aa Assembly-CSharp.dll:.PlayerSetup

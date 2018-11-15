@@ -1,4 +1,4 @@
 sceneSetups:
-- path: Assets/Scenes/tilesFox.unity
+- path: Assets/Scenes/tilesFoxcamera.unity
   isLoaded: 1
   isActive: 1
