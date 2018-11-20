@@ -1,4 +1,4 @@
-# gradproject
+# Graduation Project
 a procedurally generated 2d video game
 
 ![welcome](https://github.com/antoniob6/gradproject/blob/master/resources/images/welcomeImage.png)
