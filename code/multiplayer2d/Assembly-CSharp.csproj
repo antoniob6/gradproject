@@ -61,10 +61,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\PlayerSetup.cs" />
+    <Compile Include="Assets\mapgenerator.cs" />
+    <Compile Include="Assets\player.cs" />
     <Compile Include="Assets\Scripts\CharacterController2D.cs" />
     <Compile Include="Assets\Scripts\MoveShip1.cs" />
     <Compile Include="Assets\Scripts\PlayerMovement.cs" />
+    <Compile Include="Assets\Scripts\PlayerSetup.cs" />
     <Compile Include="Assets\Scripts\ReceiveDamage.cs" />
     <Compile Include="Assets\Scripts\ShootBullets.cs" />
     <Compile Include="Assets\Scripts\SpawnEnemies.cs" />
