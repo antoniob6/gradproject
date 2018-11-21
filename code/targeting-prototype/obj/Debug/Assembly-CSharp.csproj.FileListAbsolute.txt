@@ -1,2 +1,0 @@
-C:\Users\antonio\Desktop\unity\rollaball\rollaball\obj\Debug\Assembly-CSharp.csprojAssemblyReference.cache
-C:\Users\antonio\Desktop\unity\rollaball\rollaball\obj\Debug\Assembly-CSharp.csproj.CoreCompileInputs.cache
