@@ -1,23 +1,71 @@
-﻿using System.Collections;
+﻿/*
+ *a location quest that inhertes from the quest super class
+ * that monitors the players, and when the first one get close to the goal, he/she wins 
+ * */
 using System.Collections.Generic;
 using UnityEngine;
 
 public class LocationQuest:Quest{
 
-    [SerializeField]
-    private GameObject collectiblePrefab;
-    [SerializeField]
-    private float spawnrange = 40f;
-    [SerializeField]
-    private float spawnInterval = 1.0f;
+    private GameObject center;
+
+    private float threshold;
+
+    private Vector3 spawnPosition;
+    private float spawnrange;
+    private GameObject foundable;
 
 
-    public LocationQuest(string questNamee, GameObject[] _questOwners, string _reward)
+
+    public LocationQuest(List<GameObject> _players, GameObject _center, 
+            int _reward, string _questMessage, GameManager _GM, float _threshold=10,float _spawnrange = 5)
     {
-        
-        questName = questNamee;
-        questOwners = _questOwners;
+        players = _players;
+        center = _center;
         reward = _reward;
+        questMessage = _questMessage;
+        GM = _GM;
+        threshold = _threshold;
+        spawnrange = _spawnrange;
+        init();
     }
+    private void init()
+    {
+        updateQuestMessage();
+        Random.InitState(System.DateTime.Now.Millisecond);
+        spawnPosition = new Vector2(Random.Range(-spawnrange, spawnrange), center.transform.position.y+10);
+        foundable=GM.networkSpawn("locationPrefab",spawnPosition);
+    }
+    public override void tick() {
+        if (isComplete)
+            return;
+
+
+        if (!foundable) {
+            isComplete = true;
+            GM.questCompleted(this);
+            
+        }
+
+        foreach (GameObject p in players)
+        {
+            if (!p||!foundable)
+                continue;
+            if (Vector3.Distance(foundable.transform.position, p.transform.position) < threshold)
+            {
+                Debug.Log("player has found the foundable goal");
+                winners.Add(p);
+                isComplete = true;
+                GM.questCompleted(this);
+            }
+            
+        }
+    }
+    public override void DestroyQuest() {
+       // Debug.Log("destroying the object");
+        GM.networkDestroy(foundable);
+
+    }
+
 
 }
