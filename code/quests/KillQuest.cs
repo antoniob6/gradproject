@@ -37,8 +37,7 @@ public class KillQuest : Quest {
             return;
 
         if (winners.Count==players.Count) {
-            isComplete = true;
-            GM.questCompleted(this);
+            questCompleted();
         }
 
 
@@ -49,11 +48,10 @@ public class KillQuest : Quest {
             if (p.GetComponent<PlayerData>().hasDied) {
                 GameObject LHB = p.GetComponent<ReceiveDamage>().lastHitby;
   
-                if (LHB.tag == "Player") {
+                if (LHB &&LHB.tag == "Player") {
                     if (winners.IndexOf(LHB) == -1) {
                         winners.Add(LHB);
-                        isComplete = true;
-                        GM.questCompleted(this);
+                        questCompleted();
                         // GM.UpdatePlayerObjective(LHB, "good, now waiting for others");
                     }
                 }

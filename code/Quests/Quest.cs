@@ -8,13 +8,14 @@ using UnityEngine;
 
 public class Quest{
     public bool isComplete=false;
-    public int reward;
+    public int reward=0;
     public string questMessage;
     public List<GameObject> winners = new List<GameObject>();
     public List<GameObject> losers = new List<GameObject>();
+    public bool linkedQuest=false;
     protected List<GameObject> players;
 
-    protected GameManager GM;
+    public GameManager GM;
 
     public virtual void tick() { }
     public virtual void DestroyQuest() { }
@@ -27,7 +28,8 @@ public class Quest{
     }
     public virtual void EndQuestNow() {
         isComplete = true;
-        GM.questCompleted(this);
+        if(!linkedQuest)
+            GM.questCompleted(this);
 
     }
     public virtual void RewardPlayers() {
@@ -39,6 +41,18 @@ public class Quest{
                 pd.RpcAddScore(reward);
         }
 
+    }
+    public virtual void questCompleted() {
+        if (!isComplete&&!linkedQuest)
+            GM.questCompleted(this);
+        isComplete = true;
+
+    }
+    public List<GameObject> getPlayers() {
+        return players;
+    }
+    public string getMessage() {
+        return questMessage;
     }
 
 

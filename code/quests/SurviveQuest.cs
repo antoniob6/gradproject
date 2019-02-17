@@ -62,8 +62,13 @@ public class SurviveQuest : Quest {
 
 
         }
-        if (winners.Count == 0)
+        if (winners.Count == 0) {
+            if (!isComplete)
+                questCompleted();
             isComplete = true;
+
+
+        }
 
 
     }

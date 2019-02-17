@@ -42,8 +42,10 @@ public class LocationQuest:Quest{
 
 
         if (!foundable) {
+            if(!isComplete)
+               questCompleted();
             isComplete = true;
-            GM.questCompleted(this);
+            
             
         }
 
@@ -55,8 +57,9 @@ public class LocationQuest:Quest{
             {
                 Debug.Log("player has found the foundable goal");
                 winners.Add(p);
-                isComplete = true;
-                GM.questCompleted(this);
+
+                  questCompleted();
+
             }
             
         }
