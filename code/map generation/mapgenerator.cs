@@ -12,27 +12,20 @@ using Random = UnityEngine.Random;
 using UnityEngine.Networking;
 
 public class MapGenerator: NetworkBehaviour {
-
+    public delegate void VoidFunctionDelegate();
     public GameManager GM;
+    public Vector3 endVertixPos;
 
 
-    [SyncVar]
-    public float length = 2f;
-    [SyncVar]
-    public float width = 2f;
-    [SyncVar]
-    public int resX = 10; // 2 minimum
-    [SyncVar]
-    public int seed=0;
+    [SyncVar]public float length = 2f;
+    [SyncVar]public float width = 2f;
+    [SyncVar]public int resX = 10; // 2 minimum
+    [SyncVar]public int seed=0;
     // public float stepHeight = 2f;
-    [SyncVar]
-    public float jumpHeight = 1.5f;
-    [SyncVar]
-    public int stepWidth=4;
-    [SyncVar]
-    public float Radius = 4;
-    [SyncVar]
-    public Boolean isCircle= true;
+    [SyncVar]public float jumpHeight = 1.5f;
+    [SyncVar]public int stepWidth=4;
+    [SyncVar]public float Radius = 4;
+    [SyncVar]public Boolean isCircle= true;
 
     private int resZ = 2;
 
@@ -41,27 +34,27 @@ public class MapGenerator: NetworkBehaviour {
 
     private int oldSeed;
     // Use this for initialization
+    private EdgeCollider2D edgeCollider;
     void Start () {
         MeshFilter filter = gameObject.GetComponent<MeshFilter>();
         mainMesh = filter.mesh;
 
-        edgeCollider = gameObject.AddComponent<EdgeCollider2D>();
-        edgeCollider.sharedMaterial = physicMaterial;
+        edgeCollider = gameObject.GetComponent<EdgeCollider2D>();
 
         oldSeed = seed;
-
-
-        //chunk = GetComponent<Chunk>();
-        // chunk.init(0, 100,0, 100, 0, true);
-        updateMap();
-        //GM.mapGenerated=true;
     }
 
    public  void setRules(Rules rules)
     {
-        jumpHeight = rules.jumpHeight;
-        
-    }
+    length = rules.length;
+  width =rules.width;
+    resX = rules.resX; // 2 minimum
+     seed = rules.seed;
+     jumpHeight = rules.jumpHeight;
+     stepWidth = rules.stepWidth;
+    Radius = rules.Radius;
+    isCircle = rules.isCircle;
+}
 
 
 
@@ -69,105 +62,51 @@ public class MapGenerator: NetworkBehaviour {
 // Update is called once per frame
 void Update () {
         //if (oldSeed != seed)
-            updateMap();
-
-        
-        
-       
 
     }
-    public void updateMap() {
+    public void updateMap(VoidFunctionDelegate callback=null) {
         if (!mainMesh)
             mainMesh = gameObject.GetComponent<MeshFilter>().mesh;
 
-        makePlatform(mainMesh);
+        createMesh(mainMesh);
 
         if (isCircle)
-        {
-            turnIntoCircle(mainMesh, mainMesh.vertices[0], Vector3.down* (Radius + 2f), Radius,1);
-
-        }
-
-
-
+            turnIntoCircle(mainMesh, mainMesh.vertices[0], Radius);
         makeCollision(mainMesh.vertices);
         mainMesh.RecalculateBounds();
 
-       // GM.spawnPoints = mainMesh.vertices;
-    
+        if (callback != null) {
+            callback();
+        }
 
     }
 
+ 
 
-    public void makePlatform(Mesh mesh)
+
+    public void createMesh(Mesh mesh)
     {
         mesh.Clear();
-
-
         Vector3[] vertices = new Vector3[resX * resZ];
 
         generateSurfaceVerts(vertices,jumpHeight,stepWidth,seed, jumpHeight);
 
+        vertices=createBottomVertices(vertices);
 
-
-
-        float angle = 180;
-        vertices[resX] = new Vector3(vertices[0].x, vertices[0].y - length);
-        for (int x = 2; x < resX; x++){//generate bottom surface verticies
-           
-
-              Vector2   to = new Vector2(vertices[x].x-vertices[x - 1].x, vertices[x].y - vertices[x - 1].y);
-              Vector2  from = new Vector2(vertices[x - 2].x - vertices[x - 1].x, vertices[x - 2].y - vertices[x - 1].y);
-                angle = Vector2.SignedAngle(to,from);
-               
-
-                float desiredAngle;
-                if (angle >= 0)
-                    desiredAngle = angle / 2;
-                else
-                    desiredAngle = angle / 2 + 180;
-
-
-                Vector2 bottomVertLoc = new Vector2(to.x, to.y);
-                bottomVertLoc.Normalize();
-                bottomVertLoc = bottomVertLoc * length;
-                bottomVertLoc=Quaternion.Euler(0, 0, desiredAngle) * bottomVertLoc;//rotate vector
-
-            bottomVertLoc =  (Vector2)vertices[x - 1]- bottomVertLoc ;
-
-           
-
-            // vertices[resX+x-1] = new Vector3(vertices[x+resX-1].x, vertices[x+resX-1].y + length);
-            vertices[(x - 1) + resX] = bottomVertLoc;
-           
-        }
-        vertices[resX*resZ-1] = new Vector3(vertices[resX-1].x, vertices[resX-1].y - length);
-
-
-
-
-        #region UVs		
         Vector2[] uvs = new Vector2[vertices.Length];
-        for (int v = 0; v < resZ; v++)
-        {
-            for (int u = 0; u < resX; u++)
-            {//
-               // Debug.Log((float)u / (resX - 1));
+        for (int v = 0; v < resZ; v++){
+            for (int u = 0; u < resX; u++) { 
                 uvs[u + v * resX] = new Vector2((float)u / (resX - 1), (float)v / (resZ - 1));
             }
         }
-        #endregion
 
-        #region Triangles
+
         int nbFaces = (resX - 1) * (resZ - 1);
         int[] triangles = new int[nbFaces * 6];
         int t = 0;
         for (int faceZ =0; faceZ < resZ-1; faceZ++){
             for (int faceX = 0; faceX < resX- 1; faceX++)
             {
-                
-                // Retrieve top left corner from face ind
-                //int i = face % (resX - 1) + (face / (resZ - 1) * resX);
                 int i = faceX + faceZ * resX;
                 
                 triangles[t++] = i + resX;
@@ -181,7 +120,6 @@ void Update () {
  
             }
         }
-        #endregion
 
         mesh.vertices = vertices;
 
@@ -192,11 +130,37 @@ void Update () {
         
 
     }
+    private Vector3[] createBottomVertices(Vector3[] vertices) {
+        float angle = 180;
+        for (int x = 2; x < resX; x++) {//generate bottom surface verticies
 
+
+            Vector2 to = new Vector2(vertices[x].x - vertices[x - 1].x, vertices[x].y - vertices[x - 1].y);
+            Vector2 from = new Vector2(vertices[x - 2].x - vertices[x - 1].x, vertices[x - 2].y - vertices[x - 1].y);
+            angle = Vector2.SignedAngle(to, from);
+            float desiredAngle;
+            if (angle >= 0)
+                desiredAngle = angle / 2;
+            else
+                desiredAngle = angle / 2 + 180;
+
+
+            Vector2 bottomVertLoc = new Vector2(to.x, to.y);
+            bottomVertLoc.Normalize();
+            bottomVertLoc = bottomVertLoc * length;
+            bottomVertLoc = Quaternion.Euler(0, 0, desiredAngle) * bottomVertLoc;//rotate vector
+
+            bottomVertLoc = (Vector2)vertices[x - 1] - bottomVertLoc;
+            vertices[(x - 1) + resX] = bottomVertLoc;
+
+        }
+        vertices[resX * resZ - 1] = new Vector3(vertices[resX - 1].x, vertices[resX - 1].y - length);
+
+        return vertices;
+    }
  
 
-    private EdgeCollider2D edgeCollider;
-    public PhysicsMaterial2D physicMaterial;
+
     public void makeCollision(Vector3[] verts)
     {
 
@@ -222,13 +186,18 @@ void Update () {
             colliderPath[index] = new Vector2(verts[i * resX ].x, verts[i * resX ].y);
             index++;
         }
+        if (!edgeCollider) {
+            edgeCollider = gameObject.GetComponent<EdgeCollider2D>();
+            print("looking for collider componenet");
+        }
 
-        edgeCollider.points = colliderPath;
+
+         edgeCollider.points = colliderPath;
     }
 
     private void generateSurfaceVerts(Vector3[] vertices, float stepHight, int stepWidth, int seed,float jumpHeight)
     {
-        Random.seed = seed;
+        Random.InitState(seed);
         int x = 0;
         float unitWidth = ((float)1 / (resX - 1)) * width;
         int prvDirection = 0;
@@ -281,11 +250,10 @@ ref x);
             prvDirection = paltformDirection;
         
         }
+        vertices[resX] = new Vector3(vertices[0].x, vertices[0].y - length);
 
+        endVertixPos = vertices[resX-1];
 
-
-
-       
     }
     private Vector3 platformStraight(Vector3[] vertices,Vector3 prvVert,int numOfVerts,int maxVertIndex,
                                         Vector3 step, ref int x)
@@ -299,33 +267,23 @@ ref x);
         }
         return prvVert;
     }
-
-
-    private void turnIntoCircle(Mesh mesh, Vector3 origin,Vector3 center,float radius,float hightScale)
-    {
-        //   Vector2 bottomVertLoc = new Vector2(to.x, to.y);
-        //   bottomVertLoc.Normalize();
-        //    bottomVertLoc = bottomVertLoc * length;
-        //     bottomVertLoc = Quaternion.Euler(0, 0, desiredAngle) * bottomVertLoc;//rotate vector
+    private void turnIntoCircle(Mesh mesh, Vector3 origin,float radius,float hightScale=1.0f){
         Vector3[] verts = mesh.vertices;
-        for(int i=0;i< verts.Length; i++)
-        {
+        for(int i=0;i< verts.Length; i++) {
             Vector3 to=  Vector3.up*((verts[i].y - origin.y)* hightScale + radius);
-
-
-          //  Debug.Log(to);
-           // Debug.Log(verts[i].x / (verts[verts.Length - 1].x - verts[0].x) * 360f);
             to = Quaternion.Euler(0, 0,- verts[i].x/(verts[verts.Length - 1].x-verts[0].x) * 360f) * to ;
-           // to = to + center;
             verts[i] = to;
-
         }
         mesh.vertices = verts;
 
-
     }
 
-
+    public Vector3[] getSurfaceVerts() {
+        Vector3[] surfVerts = new Vector3[resX];
+        for (int i = 0; i < resX; i++)
+            surfVerts[i] = mainMesh.vertices[i];
+        return surfVerts;
+    }
 
 
 
