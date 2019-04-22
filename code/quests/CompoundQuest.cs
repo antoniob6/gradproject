@@ -8,8 +8,8 @@ using UnityEngine;
 public class CompoundQuest:Quest{
 
     private List<Quest> QL;
-    private Quest qAll;//encapsulates all quests
-    int[] connections;
+    private Quest qAll; //encapsulates all quests
+    int[] questConnections;
 
 
 
@@ -25,11 +25,10 @@ public class CompoundQuest:Quest{
         GM = QL[0].GM;
         players = QL[0].getPlayers();
 
-
-
-        connections = new int[questList.Count];
-       for(int i=0;i<questList.Count;i++) {
-            connections[i] = Random.Range(0, 2);
+        questConnections = new int[questList.Count];
+       for(int i=0;i<questList.Count;i++) {//0 = AND, 1 = OR
+            //connections[i] = Random.Range(0, 2);
+            questConnections[i] = 0;
         }
 
         init();
@@ -38,19 +37,16 @@ public class CompoundQuest:Quest{
     {
         questMessage = QL[1].getMessage();
         qAll = QL[0];
-        for (int i = 1; i < QL.Count; i++) {
+        for (int i = 1; i < QL.Count; i++) {//keep chaining quests
 
-
-                if (connections[i] == 0) {//and quest
-                    questMessage += " AND ";
+                if (questConnections[i] == 0) {//and quest
                     qAll = new ANDQuest(qAll, QL[i]);
                 qAll.linkedQuest = true;
-                } else { 
-                    questMessage += " OR ";
+                } else { //or quest
                     qAll = new ORQuest(qAll, QL[i]);
                 qAll.linkedQuest = true;
                 }
-            // questMessage += QL[i].getMessage();
+
             questMessage = qAll.getMessage();
         }
         updateQuestMessage();
@@ -60,14 +56,10 @@ public class CompoundQuest:Quest{
         if (isComplete)
             return;
         qAll.tick();
-        
-
 
         if (qAll.isComplete) {
             Debug.Log("compound quests completed");
-
             winners = qAll.winners;
-            losers = qAll.losers;
             questCompleted();
 
         }

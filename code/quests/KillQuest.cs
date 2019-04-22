@@ -46,7 +46,7 @@ public class KillQuest : Quest {
             if (!p)
                 continue;
             if (p.GetComponent<PlayerData>().hasDied) {
-                GameObject LHB = p.GetComponent<ReceiveDamage>().lastHitby;
+                GameObject LHB = p.GetComponent<PlayerReceiveDamage>().lastHitby;
   
                 if (LHB &&LHB.tag == "Player") {
                     if (winners.IndexOf(LHB) == -1) {

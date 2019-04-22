@@ -4,6 +4,7 @@
  * and from the other side, it connects the user interface to the game mechanics, 
  * and displays the required info, such as the player health, score and current objective. 
  */
+using System;
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
@@ -11,10 +12,11 @@ using UnityEngine.UI;
 
 public class PlayerData : NetworkBehaviour
 {
+    public PlayerConnectionObject PCO;
     public Canvas canvas;
     public Text scoreField;
     public Text objectiveField;
-    public Text healthField;
+    public SimpleHealthBar healthBar;
 
     [SyncVar]public Color spriteColor = Color.white;
     [SyncVar]public string Cname = "default";
@@ -22,49 +24,38 @@ public class PlayerData : NetworkBehaviour
     [SyncVar]public string objectiveText = "objectiveText";
     [SyncVar]public bool hasDied = false;
 
+    [SyncVar] public int KilledEntityCount = 0;
+    [SyncVar] public int KilledPlayerCount = 0;
+
+
 
     public SpriteRenderer spriteRenderer;
     public Text playerNameText;
 
 
-    void Start() {
-        InvokeRepeating("checkHp", 1.0f, 1.0f);
-        
-
-
-    }
-    void LateUpdate() {
-        
-        if (!playerNameText) {
-            playerNameText = GetComponent<PlayerConnectionObject>().GetComponentInChildren<Text>();
-        }
-        else if (playerNameText.text != Cname)
-            playerNameText.text = Cname;
-  
-        if (spriteRenderer.color != spriteColor) {
-            //   Debug.Log("color cahnged");
-            spriteRenderer.color = spriteColor;
-
-        }
+    [ClientRpc]
+    public void RpcUpdateScore(float s) {
+        score = s;
         scoreField.text = "score: " + score.ToString();
-        objectiveField.text = objectiveText;
-        if (playerNameText.text != Cname)
-            playerNameText.text = Cname;
+         TextManager.instance.createTextOnLocalInstance(PCO.playerBoundingCollider.gameObject.transform.position,"+" + (int)(s - score));
     }
     [ClientRpc]
-    public void RpcUpdateScore(float scorefn) {
-        score = scorefn;
+    public void RpcAddScore(float s) {
+        score += s;
+        scoreField.text = "score: " + score.ToString();
+        //Debug.Log("score updated");
 
+         TextManager.instance.createTextOnLocalInstance(PCO.playerBoundingCollider.gameObject.transform.position, "+" + (int)(s));
     }
-    [ClientRpc]
-    public void RpcAddScore(float scorefn) {
-        score += scorefn;
-
-    }
-    [ClientRpc]
-    public void RpcUpdateText(string text) {
+    [ClientRpc]public void RpcUpdateText(string text) {
         objectiveText = text;
-
+        objectiveField.text = objectiveText;
+    }
+    [ClientRpc]public void RpcKilledEntityCount(int c) {
+        KilledEntityCount = c;
+    }
+    [ClientRpc]public void RpcKilledPlayerCount(int c) {
+        KilledPlayerCount = c;
     }
     [ClientRpc]
     public void RpcUpdateColor(Color c) {
@@ -83,23 +74,17 @@ public class PlayerData : NetworkBehaviour
 
     }
 
-    public void checkHp() {
-        ReceiveDamage RD = GetComponent<ReceiveDamage>();
-        updateHealth(RD.getHealth());
-    }
-
-
-    public void updateHealth(int hp) {
-        healthField.text = hp.ToString();
-
-    }
     public float[] getStats() {
         float[] stats =new float[10];
         stats[0] = score;
         stats[1] = hasDied?0f:1f;
-        stats[2] = gameObject.GetComponent<ReceiveDamage>().currentHealth;
+        stats[2] = gameObject.GetComponent<PlayerReceiveDamage>().currentHealth;
         stats[3] = gameObject.GetComponent<Rigidbody2D>().velocity.magnitude;
         return stats;
     }
 
+    public void takenDamage(float currentHealth,float maxHealth) {
+        //Debug.Log("updated health bar");
+        healthBar.UpdateBar(currentHealth, maxHealth);
+    }
 }

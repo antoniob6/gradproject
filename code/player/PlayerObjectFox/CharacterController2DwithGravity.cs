@@ -10,7 +10,7 @@ using UnityEngine.Networking;
 public class CharacterController2DwithGravity : NetworkBehaviour
 {
     public Transform center;
-    public float gravity= 20f;
+
     [SerializeField] private float m_JumpForce = 400f;							// Amount of force added when the player jumps.
 	[Range(0, 1)] [SerializeField] private float m_CrouchSpeed = .36f;			// Amount of maxSpeed applied to crouching movement. 1 = 100%
 	[Range(0, .3f)] [SerializeField] private float m_MovementSmoothing = .05f;	// How much to smooth out the movement

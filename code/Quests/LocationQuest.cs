@@ -33,7 +33,7 @@ public class LocationQuest:Quest{
     {
         updateQuestMessage();
         Random.InitState(System.DateTime.Now.Millisecond);
-        spawnPosition = new Vector2(Random.Range(-spawnrange, spawnrange), center.transform.position.y+10);
+        spawnPosition = new Vector2(Random.Range(-spawnrange, spawnrange), GM.transform.position.y+10);
         foundable=GM.networkSpawn("locationPrefab",spawnPosition);
     }
     public override void tick() {

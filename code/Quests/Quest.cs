@@ -8,17 +8,17 @@ using UnityEngine;
 
 public class Quest{
     public bool isComplete=false;
-    public int reward=0;
+    public int reward=100;
     public string questMessage;
     public List<GameObject> winners = new List<GameObject>();
-    public List<GameObject> losers = new List<GameObject>();
     public bool linkedQuest=false;
-    protected List<GameObject> players;
+    public List<GameObject> players;
 
     public GameManager GM;
 
     public virtual void tick() { }
     public virtual void DestroyQuest() { }
+
     public void updateQuestMessage() {
         foreach( GameObject p in players) {
             PlayerData pd = p.GetComponent<PlayerData>();
@@ -26,19 +26,13 @@ public class Quest{
                 pd.RpcUpdateText(questMessage);
         }
     }
-    public virtual void EndQuestNow() {
-        isComplete = true;
-        if(!linkedQuest)
-            GM.questCompleted(this);
-
-    }
     public virtual void RewardPlayers() {
         foreach (GameObject p in winners) {
-            if (!p)
-                return;
             PlayerData pd = p.GetComponent<PlayerData>();
-            if (pd != null)
+            if (pd != null) {
                 pd.RpcAddScore(reward);
+                
+            }
         }
 
     }

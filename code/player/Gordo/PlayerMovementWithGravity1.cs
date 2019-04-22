@@ -29,7 +29,7 @@ public class PlayerMovementWithGravity1 : NetworkBehaviour
             horizontalMove = Input.GetAxisRaw("Horizontal") * runSpeed;
 
             animator.SetFloat("horizontalSpeed", Mathf.Abs(horizontalMove));
-            animator.SetFloat("verticalSpeed", Mathf.Abs(RB.velocity.y));
+            //animator.SetFloat("verticalSpeed", Mathf.Abs(RB.velocity.y));
             if (Input.GetButtonDown("Jump"))
             {
                 jump = true;

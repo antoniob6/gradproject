@@ -7,37 +7,62 @@ using UnityEngine.Networking;
 public class ShootBullets : NetworkBehaviour {
 
     [SerializeField]
-    private Camera playerCamera;
-
-    [SerializeField]
 	private GameObject bulletPrefab;
 
 	[SerializeField]
 	private float bulletSpeed;
 
-	void Update () {
-		if (this.isLocalPlayer &&(Input.GetMouseButtonDown(0))) {
-			this.CmdShoot ();
-		}
-	}
-
+    Vector3 bulletSpawnPoint=Vector3.zero;
+    public void Shoot() {
+        CmdShoot();
+    }
 	[Command]
 	void CmdShoot() {
-		GameObject bullet = Instantiate (bulletPrefab, playerCamera.transform.position+Vector3.forward, Quaternion.identity);
+        
+
+        Camera playerCamera = 
+            GetComponent<PlayerConnectionObject>().getPlayerCamera();
+
+
+        BoxCollider2D playerBoundingCollider =
+             GetComponent<PlayerConnectionObject>().playerBoundingCollider;
+
+
         Vector3 mousePosition = Input.mousePosition;
         mousePosition = playerCamera.ScreenToWorldPoint(mousePosition);
-        float distance = Vector2.Distance(transform.position, mousePosition);
+        Vector2 clickDiffrence= mousePosition- playerBoundingCollider.transform.position;
+        float distance = clickDiffrence.magnitude;
         //Debug.Log(distance);
-        if (distance < 5)
-            distance = 5;
+        //if the click is too close to the player then cancel
+        if (clickDiffrence.sqrMagnitude < playerBoundingCollider.bounds.extents.sqrMagnitude) {//clamp the distance
+            Debug.Log("the click is too close to the player");
+            return;
+        }
         if (distance > 10)
             distance = 10;
 
+        
+        Vector3 spawnPoint = playerBoundingCollider.bounds.center;
+        //shoot object from the apropriate side of the character
+        spawnPoint.x += playerBoundingCollider.bounds.extents.x *
+                                            Mathf.Sign(clickDiffrence.x);
 
-        bullet.GetComponent<Rigidbody2D> ().velocity = (mousePosition-transform.position)*bulletSpeed*distance/10;
-        bullet.GetComponent<Bullet>().owner = gameObject.GetComponent<ReceiveDamage>();
-      //  bullet.transform.parent = transform;
+
+
+       // bulletSpawnPoint = spawnPoint;
+        GameObject bullet = Instantiate(bulletPrefab, spawnPoint, Quaternion.identity);
+        bullet.GetComponent<Rigidbody2D> ().velocity = clickDiffrence * bulletSpeed*distance/10;
+
+        bullet.GetComponent<Bullet>().owner = gameObject.GetComponent<PlayerReceiveDamage>();
+        bullet.GetComponent<Bullet>().ownerPD = gameObject.GetComponent<PlayerData>();
+
+        //  bullet.transform.parent = transform;
         NetworkServer.Spawn (bullet);
         Destroy (bullet, 9.0f);
+    }
+
+    private void OnDrawGizmos() {
+        if(bulletSpawnPoint!=Vector3.zero)
+            Gizmos.DrawSphere(bulletSpawnPoint, 0.3f);
     }
 }
