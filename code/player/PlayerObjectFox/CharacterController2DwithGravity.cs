@@ -10,7 +10,8 @@ using UnityEngine.Networking;
 public class CharacterController2DwithGravity : NetworkBehaviour
 {
     public Transform center;
-
+    public float maxMoveSpeed = 20f;
+    public float moveForce = 25f;
     [SerializeField] private float m_JumpForce = 400f;							// Amount of force added when the player jumps.
 	[Range(0, 1)] [SerializeField] private float m_CrouchSpeed = .36f;			// Amount of maxSpeed applied to crouching movement. 1 = 100%
 	[Range(0, .3f)] [SerializeField] private float m_MovementSmoothing = .05f;	// How much to smooth out the movement
@@ -38,8 +39,11 @@ public class CharacterController2DwithGravity : NetworkBehaviour
 	public BoolEvent OnCrouchEvent;
 	private bool m_wasCrouching = false;
 
+    private PlayableCharacter PC;
+
 	private void Awake()
 	{
+        PC = GetComponent<PlayableCharacter>();
 		m_Rigidbody2D = GetComponent<Rigidbody2D>();
 
 		if (OnLandEvent == null)
@@ -49,7 +53,13 @@ public class CharacterController2DwithGravity : NetworkBehaviour
 			OnCrouchEvent = new BoolEvent();
 	}
 
-	private void FixedUpdate()
+
+
+    float timeBetweenGroundChecks=0.3f;
+
+
+
+    private void FixedUpdate()
 	{
 		bool wasGrounded = m_Grounded;
 		m_Grounded = false;
@@ -62,10 +72,15 @@ public class CharacterController2DwithGravity : NetworkBehaviour
 			if (colliders[i].gameObject != gameObject)
 			{
 				m_Grounded = true;
-				if (!wasGrounded)
-					OnLandEvent.Invoke();
+                if (!wasGrounded && timeBetweenGroundChecks < 0) {
+                    timeBetweenGroundChecks = 0.3f;
+                    OnLandEvent.Invoke();
+
+
+                }
 			}
 		}
+        timeBetweenGroundChecks -= Time.fixedDeltaTime;
 	}
 
 
@@ -119,26 +134,35 @@ public class CharacterController2DwithGravity : NetworkBehaviour
           //  Quaternion targetRotatoion = Quaternion.FromToRotation(transform.up, gravityUp) * transform.rotation;
           //  transform.rotation = Quaternion.Slerp(transform.rotation, targetRotatoion, 50 * Time.deltaTime);
             // Move the character by finding the target velocity
-            Vector3 targetVelocity = (transform.right.normalized * move * 10f) +Vector3.Project( (Vector3)(m_Rigidbody2D.velocity),transform.up);
-                //new Vector2(move * 10f, m_Rigidbody2D.velocity.y);
-                // targetVelocity = Quaternion.Euler(0, 0, transform.rotation.z/Mathf.PI*360) * targetVelocity;
-                //Debug.Log(transform.rotation.z / Mathf.PI * 360);
+            Vector3 targetVelocity = (transform.right.normalized * move * 10f) +Vector3.Project(m_Rigidbody2D.velocity,transform.up);
+            //new Vector2(move * 10f, m_Rigidbody2D.velocity.y);
+            // targetVelocity = Quaternion.Euler(0, 0, transform.rotation.z/Mathf.PI*360) * targetVelocity;
+            //Debug.Log(transform.rotation.z / Mathf.PI * 360);
+            Vector3 horizontalSpeed=Vector3.Project(m_Rigidbody2D.velocity, transform.right);
+            // m_Rigidbody2D.velocity = Vector3.SmoothDamp(m_Rigidbody2D.velocity, targetVelocity, ref m_Velocity, m_MovementSmoothing);
+           // Debug.Log(horizontalSpeed);
 
-            m_Rigidbody2D.velocity = Vector3.SmoothDamp(m_Rigidbody2D.velocity, targetVelocity, ref m_Velocity, m_MovementSmoothing);
-           // m_Rigidbody2D.AddForce((center.position - transform.position).normalized * 30f);
+            if (move > 0 && horizontalSpeed.x < maxMoveSpeed) {
+                if(horizontalSpeed.x>0)
+                    m_Rigidbody2D.AddForce(transform.right.normalized * move * moveForce);
+                else
+                    m_Rigidbody2D.AddForce(transform.right.normalized * move * moveForce*3);
+            } else if (move < 0 && horizontalSpeed.x > -maxMoveSpeed) {
+                if (horizontalSpeed.x < 0)
+                    m_Rigidbody2D.AddForce(transform.right.normalized * move * moveForce);
+                else
+                    m_Rigidbody2D.AddForce(transform.right.normalized * move * moveForce * 3);
+
+            } else {//not trying to move
+                m_Rigidbody2D.AddForce(transform.right.normalized * horizontalSpeed.x *-1f);
+            }
 
             // If the input is moving the player right and the player is facing left...
             if (move > 0 && !m_FacingRight)
-			{
-				// ... flip the player.
 				Flip();
-			}
-			// Otherwise if the input is moving the player left and the player is facing right...
 			else if (move < 0 && m_FacingRight)
-			{
-				// ... flip the player.
 				Flip();
-			}
+			
 		}
 		// If the player should jump...
 		if (m_Grounded && jump)
@@ -146,22 +170,27 @@ public class CharacterController2DwithGravity : NetworkBehaviour
 			// Add a vertical force to the player.
 			m_Grounded = false;
 			m_Rigidbody2D.AddForce(transform.up.normalized* m_JumpForce);
-           // Debug.Log(transform.up.normalized);
 		}
 	}
 
 
 	private void Flip()
 	{
-        return;
+       // return;
 
         m_FacingRight = !m_FacingRight;
 
-		// Multiply the player's x local scale by -1.
-		Vector3 theScale = transform.localScale;
-		theScale.x *= -1;
-		transform.localScale = theScale;
-	}
+       // transform.Rotate(0, 90, 0); //flip character by rotation 
+        //Debug.Log("chracter flipped");
+
+        // Multiply the player's x local scale by -1.
+        Vector3 theScale = transform.localScale;
+        theScale.x *= -1;
+        transform.localScale = theScale;
+
+
+        PC.PCO.facingRight = m_FacingRight;
+    }
 
 
 

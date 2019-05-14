@@ -1,4 +1,10 @@
-﻿using System.Collections;
+﻿/* this is what connects the server to the clients and the other way around
+ * it hold all the information about the client that the server needs
+ * and is responsible for the player character
+ */
+
+
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,8 +16,10 @@ public class PlayerConnectionObject : NetworkBehaviour
     [HideInInspector]   public bool active;
     public PlayerCamera playerCamera;
     [HideInInspector]public BoxCollider2D playerBoundingCollider;
- 
+    [HideInInspector] public PlayableCharacter PC;
 
+
+    public bool facingRight = true;
 
     private int index = 0;
     void Start() {
@@ -20,7 +28,7 @@ public class PlayerConnectionObject : NetworkBehaviour
             return;
         }
         active = true;
-        CmdSpawnMyUnit();
+        //CmdSpawnMyUnit();
     }
 
 
@@ -55,7 +63,7 @@ public class PlayerConnectionObject : NetworkBehaviour
 
 
     [Command]
-    void CmdSpawnMyUnit() {
+    public void CmdSpawnMyUnit() {
         Vector3 spawnPoint = transform.position;
         if (playerBoundingCollider != null) {
             spawnPoint = playerBoundingCollider.gameObject.transform.position;
@@ -65,23 +73,28 @@ public class PlayerConnectionObject : NetworkBehaviour
         GameObject PlayerObject = Instantiate(spawnableCharacters[index],spawnPoint,Quaternion.identity);
         NetworkServer.SpawnWithClientAuthority(PlayerObject, connectionToClient);
         RpcUpdateTarget(PlayerObject);
+
+     //   PC = PlayerObject.GetComponent<PlayableCharacter>();
+     //   playerBoundingCollider = PC.getPlayerBoundingCollider();
+     //   PC.RD = gameObject.GetComponent<PlayerReceiveDamage>();
+       // PC.PCO = this;
+
+
     }
     [ClientRpc]
     void RpcUpdateTarget(GameObject newTarget) {
         if (isLocalPlayer) {
             playerCamera.TargetObject = newTarget;
-            PlayableCharacter PC= newTarget.GetComponent<PlayableCharacter>();
-
-            playerBoundingCollider =PC.getPlayerBoundingCollider();
-            PC.RD = gameObject.GetComponent<PlayerReceiveDamage>();
 
         } else {//instances that are on the other clients
 
         }
 
+        PC = newTarget.GetComponent<PlayableCharacter>();
+        playerBoundingCollider = PC.getPlayerBoundingCollider();
+        PC.RD = gameObject.GetComponent<PlayerReceiveDamage>();
+        PC.PCO = this;
 
-        GetComponent<PlayerData>().playerNameText = newTarget.GetComponentInChildren<Text>();
-        GetComponent<PlayerData>().spriteRenderer = newTarget.GetComponent<SpriteRenderer>();
     }
     
 
@@ -103,4 +116,11 @@ public class PlayerConnectionObject : NetworkBehaviour
     [Command] void CmdPrintString(string s) {
         print(s);
     }
+
+    public bool isLocal() {
+        return isLocalPlayer;
+    }
+
+
+    
 }

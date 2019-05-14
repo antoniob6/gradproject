@@ -13,7 +13,7 @@ public class BossQuest:Quest{
 
     private Vector3 spawnPosition;
     private float spawnrange;
-    private GameObject foundable;
+    private GameObject bossGO;
 
 
 
@@ -34,39 +34,23 @@ public class BossQuest:Quest{
         updateQuestMessage();
         Random.InitState(System.DateTime.Now.Millisecond);
         spawnPosition = new Vector2(Random.Range(-spawnrange, spawnrange), GM.transform.position.y+10);
-        foundable=GM.networkSpawn("locationPrefab",spawnPosition);
+        bossGO=GM.networkSpawn("bossPrefab",spawnPosition);
     }
     public override void tick() {
         if (isComplete)
             return;
 
-
-        if (!foundable) {
+        if (!bossGO) {
             if(!isComplete)
                questCompleted();
-            isComplete = true;
-            
-            
+            isComplete = true;     
         }
 
-        foreach (GameObject p in players)
-        {
-            if (!p||!foundable)
-                continue;
-            if (Vector3.Distance(foundable.transform.position, p.transform.position) < threshold)
-            {
-                Debug.Log("player has found the foundable goal");
-                winners.Add(p);
 
-                  questCompleted();
-
-            }
-            
-        }
     }
     public override void DestroyQuest() {
        // Debug.Log("destroying the object");
-        GM.networkDestroy(foundable);
+        GM.networkDestroy(bossGO);
 
     }
 

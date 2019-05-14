@@ -40,7 +40,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1548100377848816}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 2.0515556, y: -25.620995, z: 0}
+  m_LocalPosition: {x: -9.307781, y: -1.5428278, z: 0}
   m_LocalScale: {x: 1.763687, y: 1.763687, z: 1.763687}
   m_Children: []
   m_Father: {fileID: 0}
@@ -103,7 +103,7 @@ BoxCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: -0.000000014901161, y: 0}
+  m_Offset: {x: 0.001964718, y: -0.04616843}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
@@ -114,7 +114,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.4, y: 0.3}
+  m_Size: {x: 0.27426517, y: 0.1801587}
   m_EdgeRadius: 0
 --- !u!114 &114010286127917266
 MonoBehaviour:
@@ -129,8 +129,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   onDeathEffect: {fileID: 1113344616547960, guid: ca91f9a8283f57042830bdc02fa84302,
     type: 2}
+  onDamageEffect: {fileID: 1000012909287652, guid: 90384af419bb3ca4f98f72359604ce8b,
+    type: 2}
   maxHealth: 3
   currentHealth: 0
+  destroyWhenDead: 1
 --- !u!114 &114034901613572644
 MonoBehaviour:
   m_ObjectHideFlags: 1

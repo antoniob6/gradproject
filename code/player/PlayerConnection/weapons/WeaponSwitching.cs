@@ -6,25 +6,34 @@ public class WeaponSwitching : MonoBehaviour
 {
     int selectedWeapon = 0;
 
+    private PlayerConnectionObject parentPCO;
     void Start() {
         selectWeapon();
+        parentPCO = transform.parent.GetComponent<PlayerConnectionObject>();
+
     }
 
     void Update() {
         int previousSelectedWeapon = selectedWeapon;
-        if (Input.GetAxis("Mouse ScrollWheel") > 0.0f) {
-            if (selectedWeapon >= transform.childCount - 1)
-                selectedWeapon = 0;
-            else
-                selectedWeapon++;
+        if (parentPCO.isLocal()) {//local player can change weapon
+            if (Input.GetKeyDown(KeyCode.Q)) {
+                if (selectedWeapon >= transform.childCount - 1)
+                    selectedWeapon = 0;
+                else
+                    selectedWeapon++;
+            }
+/*
+            if (Input.GetAxis("Mouse ScrollWheel") < 0.0f) {
+                if (selectedWeapon <= 0)
+                    selectedWeapon = 0;
+                else
+                    selectedWeapon--;
+            }
+            */
+
         }
 
-        if (Input.GetAxis("Mouse ScrollWheel") < 0.0f) {
-            if (selectedWeapon <= 0)
-                selectedWeapon = transform.childCount - 1;
-            else
-                selectedWeapon--;
-        }
+
         if (previousSelectedWeapon != selectedWeapon) {
             selectWeapon();
         }

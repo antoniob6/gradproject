@@ -1,11 +1,53 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
+using UnityEngine.UI;
 
-public class PlayableCharacter : MonoBehaviour {
-    public PlayerReceiveDamage RD;
+public class PlayableCharacter : NetworkBehaviour {
+
+    public Text playerTextRefernce;
+    public GameObject deathEffect;
     public BoxCollider2D PlayerBoundingCollider;
-   // public float timeBetweenDmg;
+
+    public Animator animator;
+    public Rigidbody2D rigibodyComp;
+    public SpriteRenderer spriteRenderer;
+
+
+    public PlayerReceiveDamage RD;//set up by PlayerConnectionObject
+    public PlayerConnectionObject PCO;//set up by PlayerConnectionObject
+    // public float timeBetweenDmg;
+
+
+    private void Start() {
+        if (!animator)
+            animator = GetComponent<Animator>();
+        if (!rigibodyComp)
+            rigibodyComp = GetComponent<Rigidbody2D>();
+        if (!spriteRenderer)
+            spriteRenderer = GetComponent<SpriteRenderer>();
+
+
+
+        if (!spriteRenderer || !rigibodyComp || !animator)
+            Debug.Log("please assign componenets manually");
+        Invoke("delayed", 1f);
+        
+    }
+    void delayed() {
+        setDisplayName(RD.gameObject.GetComponent<PlayerData>().playerName);
+    }
+
+
+    public void setDisplayName(string newName) {
+            if (playerTextRefernce) {
+                playerTextRefernce.text = newName;
+           // Debug.Log("set player name to: " + newName);
+            }
+        
+    }
+
     public BoxCollider2D getPlayerBoundingCollider() {
         if (!PlayerBoundingCollider) {
             Debug.Log("player bounding collider not assigned");
@@ -14,8 +56,9 @@ public class PlayableCharacter : MonoBehaviour {
         return PlayerBoundingCollider;
     }
 
+    void OnTriggerEnter2D(Collider2D collider) {//runs on all instances
+                                     //but later deals damage only on server
 
-    void OnTriggerEnter2D(Collider2D collider) {
         if (!RD) {
             Debug.Log("RD not assigned");
             return;
@@ -24,4 +67,67 @@ public class PlayableCharacter : MonoBehaviour {
     }
 
 
+
+    [ClientRpc]public void RpcPlayerDied() {
+        StartCoroutine(deathCo(3));
     }
+
+    IEnumerator deathCo(float respawnTime) {
+        if (deathEffect) {
+            GameObject DE = Instantiate(deathEffect, gameObject.transform.position, transform.rotation);
+            DE.transform.parent = transform;
+        } else {
+            Debug.Log("player death effect not assigned");
+        }
+
+
+        Color oldSpriteColor =Color.white;
+        //freze player because dead
+        if (rigibodyComp)
+            rigibodyComp.constraints = RigidbodyConstraints2D.FreezeAll;
+        if (animator)
+            animator.SetBool("IsDead", true);
+        if (spriteRenderer) {
+            oldSpriteColor = spriteRenderer.color;
+            spriteRenderer.color = Color.black;
+        }
+
+
+        yield return new WaitForSeconds(respawnTime);
+
+
+        if(rigibodyComp)
+            rigibodyComp.constraints = RigidbodyConstraints2D.None;
+        if (animator)
+            animator.SetBool("IsDead", true);
+        if (spriteRenderer)
+            spriteRenderer.color = oldSpriteColor;
+
+
+        //respawn the player
+        transform.position = RD.initialPosition;
+        RD.currentHealth =RD.maxHealth;
+        RD.didWeCheckDeath = false;
+
+    }
+
+    [ClientRpc] public void RpcPlayerTakenDamage() {
+        animator.SetBool("IsHurt", true);
+        Invoke("finishedTakingDamage", 0.5f);
+        rigibodyComp.velocity=Vector2.zero;
+      //  Debug.Log("adding kickback to player");
+
+
+    }
+    void finishedTakingDamage() {
+        animator.SetBool("IsHurt", false);
+    }
+
+    
+
+
+
+
+
+
+}

@@ -18,17 +18,7 @@ public class Bullet : MonoBehaviour {
 	void Update () {
 		
 	}
-    void OnTriggerEnter2D(Collider2D collider) {
-        if (!hit &&collider.gameObject!=owner.gameObject) {
-            hit = true;
-            //Debug.Log("bullet has hit the target");
-           //  Instantiate(bulletHitEffect, gameObject.transform.position, transform.rotation);
-           
-           // Destroy(collider.gameObject);
-        }
 
-
-    }
 
 
 

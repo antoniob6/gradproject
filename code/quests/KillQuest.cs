@@ -10,29 +10,35 @@ using UnityEngine;
 
 public class KillQuest : Quest {
 
-
-
-
-
-    public KillQuest(List<GameObject> _players,
-            int _reward, string _questMessage, GameManager _GM) {
+    private int KillLimit = 0;
+    public KillQuest(List<GameObject> _players, GameManager _GM) : base() {
         players = _players;
-
-        reward = _reward;
-        questMessage = _questMessage;
         GM = _GM;
-        init();
+        reward = Random.Range(50, 500);
+        KillLimit = Random.Range(1, 20);
+        questMessage = "kill " + KillLimit + " players, and get "+ reward+ " points";
+        updateQuestMessage();
+
+
+
+
+
     }
     private void init() {
-        updateQuestMessage();
-        Random.InitState(System.DateTime.Now.Millisecond);
+
         foreach (GameObject p in players) {
-           
-            p.GetComponent<PlayerData>().RpchasDied(false);
+            p.GetComponent<PlayerData>().resetRoundStats();
         }
 
     }
+
+    bool initd = false;
     public override void tick() {
+        base.tick();
+        if (!initd) {
+            init();
+            initd = true;
+        }
         if (isComplete)
             return;
 
@@ -45,7 +51,7 @@ public class KillQuest : Quest {
         foreach (GameObject p in players) {
             if (!p)
                 continue;
-            if (p.GetComponent<PlayerData>().hasDied) {
+            if (p.GetComponent<PlayerData>().killedPlayerCount>=KillLimit) {
                 GameObject LHB = p.GetComponent<PlayerReceiveDamage>().lastHitby;
   
                 if (LHB &&LHB.tag == "Player") {

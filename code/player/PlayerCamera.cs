@@ -4,17 +4,49 @@ using UnityEngine;
 using UnityEngine.Networking;
 public class PlayerCamera : MonoBehaviour {
     public GameObject TargetObject;
-	// Use this for initialization
-	void Start () {
-		
-	}
-	
-	// Update is called once per frame
-	void Update () {
+    private PlayerConnectionObject parentPCO;
+    public int zoomLimit = 5;
+
+    private int zoomLevel = 2;
+    private Camera CameraComponenet;
+    private float startingCameraSize;
+    void Start() {
+        parentPCO = transform.parent.GetComponent<PlayerConnectionObject>();
+        CameraComponenet= GetComponent<Camera>();
+        startingCameraSize= CameraComponenet.orthographicSize;
+    }
+
+    // Update is called once per frame
+    void Update () {
+        int previousSelectedZoomLevel = zoomLevel;
         if (TargetObject) { 
             transform.position = TargetObject.transform.position;
             transform.position += Vector3.back;
         }
-        
-	}
+        if (parentPCO.isLocal()) {//local player can change weapon
+            if (Input.GetAxis("Mouse ScrollWheel") < 0.0f) {
+                if (zoomLevel >= zoomLimit)
+                    zoomLevel = zoomLimit;
+                else
+                    zoomLevel++;
+            }
+            
+            if (Input.GetAxis("Mouse ScrollWheel") > 0.0f) {
+                if (zoomLevel <= 1)
+                    zoomLevel = 1;
+                else
+                    zoomLevel--;
+            }
+                        
+
+        }
+        if (previousSelectedZoomLevel != zoomLevel) {
+            selectZoom();
+        }
+
+    }
+
+    void selectZoom() {
+        CameraComponenet.orthographicSize = zoomLevel * startingCameraSize;
+    }
 }

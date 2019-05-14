@@ -13,9 +13,9 @@ using UnityEngine.Networking;
 
 public class PlayerReceiveDamage : NetworkBehaviour {
     public GameObject recieveDamageEffect;
-    public GameObject deathEffect;
 
-	[SerializeField]private int maxHealth = 10;
+
+	public int maxHealth = 10;
 
 	[SyncVar]public int currentHealth;
 
@@ -24,44 +24,46 @@ public class PlayerReceiveDamage : NetworkBehaviour {
     [SerializeField]
     private string deathTag="Death";
 
-
+    public float maxRecoveryTime=0.5f;
 
     [SerializeField]
 	private bool destroyOnDeath;
 
-	private Vector2 initialPosition;
+	public Vector2 initialPosition;
     private Rigidbody2D m_Rigidbody2D;
     private bool isdead = false;
-    public Animator animator;
+
 
     public GameObject lastHitby = null;
 
+
     private PlayerData PD;
-    public int getHealth()
-    {
+    private PlayerConnectionObject PCO;
+    private void Start() {
+        PCO = GetComponent<PlayerConnectionObject>();
+        this.currentHealth = this.maxHealth;
+        this.initialPosition = this.transform.position;
+        PD = GetComponent<PlayerData>();
+    }
+
+    public int getHealth() {
         return currentHealth;
     }
 
-    private void Awake()
-    {
-        m_Rigidbody2D = GetComponent<Rigidbody2D>();
-        PD = GetComponent<PlayerData>();
 
-    }
-    // Use this for initialization
-    void Start () {
-		this.currentHealth = this.maxHealth;
-		this.initialPosition = this.transform.position;
-	}
-
+    private float lastDamageTime = 0f;
     public void characterTriggered(Collider2D collider) {
-
+        if (Time.time - lastDamageTime <= maxRecoveryTime) {
+           // Debug.Log("damage prevented: " + (Time.time - lastDamageTime));
+            return;
+        }
+        lastDamageTime = Time.time;
         //Debug.Log("character triggered: "+ currentHealth);
         //hit by bullet
         if (collider.tag == "Bullet" && collider.gameObject.GetComponent<Bullet>().owner != this.gameObject.GetComponent<PlayerReceiveDamage>()) {
             Destroy(collider.gameObject);
-            this.TakeDamage(1);
-            m_Rigidbody2D.velocity = new Vector3(0, 0, 0);
+            TakeDamage(1);
+           // m_Rigidbody2D.velocity = new Vector3(0, 0, 0);
             lastHitby = collider.gameObject.GetComponent<Bullet>().owner.gameObject;
            
 
@@ -70,11 +72,15 @@ public class PlayerReceiveDamage : NetworkBehaviour {
         else if (collider.tag == this.enemyTag) {
             Destroy(collider.gameObject);
             this.TakeDamage (1);
-        //    Debug.Log("destroying enemy");
+
 			
-		}
-        //touched the death layer
-        else if (collider.tag == this.deathTag)
+		} else if (collider.tag == "Boss") {
+            //Destroy(collider.gameObject);
+            //this.TakeDamage(3);
+
+        }
+  //touched the death layer
+  else if (collider.tag == "Death")
         {
             this.TakeDamage(100);
             m_Rigidbody2D.velocity = new Vector3(0, 0, 0);
@@ -84,101 +90,57 @@ public class PlayerReceiveDamage : NetworkBehaviour {
     }
     
 
-    bool didWeCheckDeath = false;
+   public bool didWeCheckDeath = false;
 
 
-	void TakeDamage(int amount) {
-		if (isServer) {
-			currentHealth -= amount;
-            if (recieveDamageEffect) {
-                GameObject GO = Instantiate(recieveDamageEffect, transform.position, Quaternion.identity);
-                NetworkServer.Spawn(GO);
-            } else {
-                Debug.Log("effect recieve damage  not assigned");
-            }
-            if (PD)
-                PD.takenDamage(currentHealth, maxHealth);
-            else
-                Debug.Log("please assign PD");
+	public void TakeDamage(int amount) {
+        if (!isServer)//only server deals damage
+            return;
 
-                if (this.currentHealth <= 0) {
-                if(!didWeCheckDeath){
-                    didWeCheckDeath = true;
-					
-					RpcRespawn ();
-                    if(PD)
-                      PD.hasDied = true;
-                    if (lastHitby) {//last hit was by another player
-                        PlayerData hitByPD = lastHitby.gameObject.GetComponent<PlayerData>();
-                        if (hitByPD != null) {
-                            hitByPD.RpcAddScore(100);
-                            hitByPD.RpcKilledPlayerCount(hitByPD.KilledPlayerCount + 1);
-                        }
-                    } else {
-                       // Debug.Log("player died but couldn't find bullet owner");
+        currentHealth -= amount;//reduce the amount of health
+
+        if (recieveDamageEffect) {//add an effect that damage was received
+            GameObject GO = Instantiate(recieveDamageEffect, PCO.PC.transform.position, Quaternion.identity);
+            
+            NetworkServer.Spawn(GO);
+        } else {
+            Debug.Log("effect recieve damage  not assigned");
+        }
+
+        if (PD)
+            PD.takenDamage(currentHealth, maxHealth);
+        else
+            Debug.Log("PD not assigned");
+
+        if (currentHealth <= 0) {//player died
+            if(!didWeCheckDeath){// we only die once
+                didWeCheckDeath = true;
+
+                if (PD) {
+                    PD.playerDied();
+                }
+                if (lastHitby) {//last hit was by another player
+                    PlayerData hitByPD = lastHitby.gameObject.GetComponent<PlayerData>();
+                    if (hitByPD != null) {
+                        hitByPD.playerKilledPlayer();
                     }
+                } else {
+                    //died but was never hit by any player
+                }
 
                     
-				}
 			}
-
-            if (animator &&gameObject.tag == "Player")
-            {
-                animator.SetBool("IsHurt", true);
-                Invoke("finishedTakingDamage", 1);
-            }
-        }
-	}
-    void finishedTakingDamage()
-    {
-        animator.SetBool("IsHurt", false);
-    }
-
-	[ClientRpc]
-	void RpcRespawn() {
-       // StartCoroutine(deathCo(3));
-
-	}
-    bool spriteColorSet = false;
-
-
-    IEnumerator deathCo(float time) {
-        if (deathEffect) {
-         GameObject DE=   Instantiate(deathEffect, gameObject.transform.position, transform.rotation);
-            DE.transform.parent = transform;
-        } else {
-            Debug.Log("death effect not assigned");
-        }
-
-        // GameObject message = Instantiate(messageToAllPrefab, Vector3.zero, Quaternion.identity) as GameObject;
-        // NetworkServer.Spawn(message);
-        //  message.GetComponent<GameMessage>().RpcUpdateText(m);
-
-      //  m_Rigidbody2D.constraints = RigidbodyConstraints2D.FreezeAll;
-
-        Color oldSpriteColor =Color.white;
-        PlayerData pd = gameObject.GetComponent<PlayerData>();
-        if (pd != null) {
-            if (!spriteColorSet) {
-                oldSpriteColor = pd.spriteColor;
-                spriteColorSet = true;
-            }
-            pd.CmdUpdateColor(Color.black);
+		}
         
-        }
+	}
 
 
-        yield return new WaitForSeconds(time);
-        if (pd != null) {
-            pd.CmdUpdateColor(oldSpriteColor);
 
-        }
-        m_Rigidbody2D.constraints = RigidbodyConstraints2D.None;
-        this.transform.position = this.initialPosition;
-        this.currentHealth = this.maxHealth;
-        didWeCheckDeath = false;
 
-    }
+
+
+
+
 
 
 }

@@ -1,6 +1,6 @@
 ﻿/*
  *a collect quest that inhertes from the quest super class
- * that monitors the players, and when the first one get close to the goal, he/she wins 
+ * that whoever helps in collecting the candy will get a reward
  * */
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,65 +10,91 @@ public class CollectQuest : Quest
 
     private GameObject center;
 
-    private float threshold;
+    private float threshold= 2f;
 
     private Vector3 spawnPosition;
     private float spawnrange;
     private List<GameObject> candies;
+    private List<GameObject> candiesToRemove;
+    private List<GameObject> finders;
 
-    
-
-    public CollectQuest(List<GameObject> _players, GameObject _center,
-            int _reward, string _questMessage, GameManager _GM, float _threshold = 10, float _spawnrange = 5) {
+    private int collectLimit = 0;
+    public CollectQuest(List<GameObject> _players, GameManager _GM) : base() {
         players = _players;
-        center = _center;
-        reward = _reward;
-        questMessage = _questMessage;
         GM = _GM;
-        threshold = _threshold;
-        spawnrange = _spawnrange;
-        init();
+        candies = new List<GameObject>();
+        candiesToRemove = new List<GameObject>();
+        finders = new List<GameObject>();
+
+        reward = Random.Range(50, 500);
+        collectLimit = Random.Range(3, 20);
+
+        questMessage = "everyone collect " + collectLimit + " pieces of red candy, and get " + reward + " points";
+        updateQuestMessage();
     }
 
-    private int collectLimit=0;
+    
     
     private void init() {
-        candies = new List<GameObject>();
-
-        questMessage = "collect " + collectLimit + " pieces of red candy";
-        updateQuestMessage();
-        Random.InitState(System.DateTime.Now.Millisecond);
-        collectLimit = Random.Range(3, 10);
         
+
         for (int i = 0; i < collectLimit * 2; i++) {
-            spawnPosition = new Vector2(players[0].transform.position.x+Random.Range(-spawnrange, spawnrange), players[0].transform.position.y + 10);
+            //spawnPosition = new Vector2(players[0].transform.position.x+Random.Range(-spawnrange, spawnrange), players[0].transform.position.y + 10);
+            spawnPosition = GM.MM.getRandomPosition();
+            spawnPosition += GravitySystem.instance.getUpDirection(spawnPosition);
+            Debug.Log("spawnning candy");
             candies.Add(GM.networkSpawn("candyPrefab", spawnPosition));
 
         }
     }
+
+    bool initd = false;
     public override void tick() {
+        base.tick();
+        if (!initd) {
+            init();
+            initd = true;
+        }
         if (isComplete)
             return;
 
         foreach (GameObject p in players) {
             if (!p)
                 continue;
-
+            PlayableCharacter PC = p.GetComponent<PlayerConnectionObject>().PC;
+            if (!PC)
+                continue;
             foreach (GameObject c in candies) {
-                if (Vector3.Distance(c.transform.position, p.transform.position) < threshold) {
+
+                if (Vector3.Distance(c.transform.position, PC.transform.position) < threshold) {
                     Debug.Log("player has found a piece of candy");
-                    candies.Remove(c);
+                    if (finders.IndexOf(p) < 0)
+                        finders.Add(p);
+                    candiesToRemove.Add(c);
                     GM.networkDestroy(c);
                     collectLimit--;
 
-                    if(collectLimit==0)
+
+                    if (collectLimit == 0) {
+                        winners.AddRange(finders);
                         questCompleted();
+                    }
+
+                    questMessage = "everyone search for " + collectLimit + " pieces of red candy";
+                    updateQuestMessage();
 
                 }
             }
+            foreach(GameObject c in candiesToRemove) {
+                candies.Remove(c);
+            }
+            candiesToRemove.Clear();
 
         }
     }
+
+
+
     public override void DestroyQuest() {
         // Debug.Log("destroying the object");
         foreach (GameObject c in candies) {

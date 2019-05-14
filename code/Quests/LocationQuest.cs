@@ -7,7 +7,6 @@ using UnityEngine;
 
 public class LocationQuest:Quest{
 
-    private GameObject center;
 
     private float threshold;
 
@@ -16,27 +15,37 @@ public class LocationQuest:Quest{
     private GameObject foundable;
 
 
-
-    public LocationQuest(List<GameObject> _players, GameObject _center, 
-            int _reward, string _questMessage, GameManager _GM, float _threshold=10,float _spawnrange = 5)
-    {
+    public LocationQuest(List<GameObject> _players, GameManager _GM):base(){
         players = _players;
-        center = _center;
-        reward = _reward;
-        questMessage = _questMessage;
+
+        reward = Random.Range(50, 500);
+        questMessage ="find the candy first and get "+ reward+" points";
         GM = _GM;
-        threshold = _threshold;
-        spawnrange = _spawnrange;
-        init();
+        threshold = 2f;
+        updateQuestMessage();
+
     }
     private void init()
     {
-        updateQuestMessage();
+
         Random.InitState(System.DateTime.Now.Millisecond);
-        spawnPosition = new Vector2(Random.Range(-spawnrange, spawnrange), GM.transform.position.y+10);
-        foundable=GM.networkSpawn("locationPrefab",spawnPosition);
+        //spawnPosition = new Vector2(Random.Range(-spawnrange, spawnrange), GM.transform.position.y+10);
+
+        spawnPosition = GM.MM.getRandomPosition();
+        //Debug.Log(spawnPosition);
+        spawnPosition += GravitySystem.instance.getUpDirection(spawnPosition);
+        //Debug.Log(spawnPosition);
+        foundable =GM.networkSpawn("locationPrefab",spawnPosition);
+        //GM.setTimeLimit(30f);
     }
+    bool initd = false;
     public override void tick() {
+        base.tick();
+
+        if (!initd) {
+            init();
+            initd = true;
+        }
         if (isComplete)
             return;
 
@@ -51,24 +60,29 @@ public class LocationQuest:Quest{
 
         foreach (GameObject p in players)
         {
+            BoxCollider2D PBC = p.GetComponent<PlayerConnectionObject>().
+                playerBoundingCollider;
+            if (!PBC)
+                continue;
+
+            GameObject GO = PBC.gameObject;
             if (!p||!foundable)
                 continue;
-            if (Vector3.Distance(foundable.transform.position, p.transform.position) < threshold)
+            if (Vector3.Distance(foundable.transform.position, GO.transform.position) < threshold)
             {
-                Debug.Log("player has found the foundable goal");
+                //Debug.Log("player has found the foundable goal");
                 winners.Add(p);
-
-                  questCompleted();
+                questCompleted();
 
             }
             
         }
     }
     public override void DestroyQuest() {
-       // Debug.Log("destroying the object");
         GM.networkDestroy(foundable);
-
     }
+
+
 
 
 }

@@ -21,7 +21,7 @@ public class BackGroundManager : NetworkBehaviour {
         if (isLocalPlayer&& backgroundImages.Length>=1) {
             timeLeft -= Time.deltaTime;
             if (timeLeft <= 0f) {
-                Debug.Log("changing background image");
+              //  Debug.Log("changing background image");
                 timeLeft = imageTime;
                 CmdNextImage();
             }

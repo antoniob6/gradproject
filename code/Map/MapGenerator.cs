@@ -11,8 +11,12 @@ using Random = UnityEngine.Random;
 
 public class MapGenerator: NetworkBehaviour {
     public delegate void VoidFunctionDelegate();
-    public GameManager GM;
+    public delegate void MapGeneratorFunctionDelegate(MapGenerator MG);
+    //public GameManager GM;
     public Vector3 RightEdge;
+
+
+    
 
 
     [SyncVar]public float thickness = 2f;
@@ -28,9 +32,15 @@ public class MapGenerator: NetworkBehaviour {
     private int resZ = 2;
 
 
-    private Mesh mainMesh;
 
+    public Mesh mainMesh;
+    private Vector3[] topSurface;
+    private Vector3[] topSurfaceSpread;
+    private Vector3 positionSpread;
     private int oldSeed;
+
+
+    private bool finished = false;
     // Use this for initialization
     private EdgeCollider2D edgeCollider;
     void Start () {
@@ -42,70 +52,134 @@ public class MapGenerator: NetworkBehaviour {
         oldSeed = seed;
     }
 
-   public  void setRules(Rules rules)
-    {
-    thickness = rules.length;
-  length =rules.width;
-    totalSurfaceVerts = rules.resX; 
-     seed = rules.seed;
-     jumpHeight = rules.jumpHeight;
-     vertsPerPlatform = rules.stepWidth;
+   public  void setRules(Rules rules){
+    length =rules.length; 
+    seed = rules.seed;
+    jumpHeight = rules.jumpHeight;
     Radius = rules.Radius;
     isCircle = rules.isCircle;
-}
 
-
-
-
-// Update is called once per frame
-void Update () {
-        //if (oldSeed != seed)
-
+    totalSurfaceVerts = (int)length;
     }
-    public void updateMap(VoidFunctionDelegate callback=null) {
+
+
+    //  [ClientRpc]public void RpcUpdateMap() {
+    //     Debug.Log("clients recvied the server update signal");
+    //      updateMap();
+    //  }
+
+    [SyncVar(hook = "onChange")] public bool createBaseMapVerts = false;
+    public void onChange(bool v) {
+        Debug.Log("bool changed creating map on client");
+        createBaseMapVerts = v;
+        updateMap();
+    }
+
+    public void updateMap(MapGeneratorFunctionDelegate callback =null) {
+        createBaseMapVerts = true;
+      //  if (isServer) {
+        //    Debug.Log("server is updating the map on the clients");
+         //   RpcUpdateMap();
+       // }
+
         if (!mainMesh)
             mainMesh = gameObject.GetComponent<MeshFilter>().mesh;
         createMesh(mainMesh);
+        positionSpread = transform.position;
+        topSurfaceSpread = new Vector3[totalSurfaceVerts];
+        for (int i = 0; i < totalSurfaceVerts; i++) {
+            topSurfaceSpread[i] = mainMesh.vertices[i];
+        }
 
         if (isCircle)
             turnIntoCircle(mainMesh, mainMesh.vertices[0], Radius);
         makeCollision(mainMesh.vertices);
         mainMesh.RecalculateBounds();
+        topSurface = new Vector3[totalSurfaceVerts];
+        for (int i = 0; i < totalSurfaceVerts; i++) {
+            topSurface[i] = mainMesh.vertices[i];
+        }
 
         if (callback != null) {
-            callback();
+            callback(this);
         }
 
     }
 
 
-    Vector3[] currentSurface;
 
-    public void updateMapPlatform(Vector3[] surfaceToAvoid, VoidFunctionDelegate callback = null) {
+
+    public void updateMapPlatform(Vector3[] surfaceToAvoidGlobal, MapGeneratorFunctionDelegate callback = null) {
         if (!mainMesh)
             mainMesh = gameObject.GetComponent<MeshFilter>().mesh;
+        Vector3[] surfaceToAvoidLocal = tranlateVertsToLocalSpace(surfaceToAvoidGlobal);
+        Vector3[] surfaceVerts= createSurfacePlaneThatAvoids(surfaceToAvoidLocal,totalSurfaceVerts);
 
-        surfaceToAvoid = tranlateVertsToLocalSpace(surfaceToAvoid);
-        Vector3[] surfaceVerts= createSurfacePlaneThatAvoids(surfaceToAvoid,totalSurfaceVerts);
-        currentSurface = surfaceVerts;
         
         Mesh mesh=createMeshFromSurfacePlane(surfaceVerts);
 
-        if (isCircle)
-            turnIntoCircle(mesh, mesh.vertices[0], Radius);
+        positionSpread = transform.position;
+        topSurfaceSpread = new Vector3[totalSurfaceVerts];
+        for (int i = 0; i < totalSurfaceVerts; i++) {
+            topSurfaceSpread[i] = mesh.vertices[i];
+        }
+
+        //if (isCircle)
+           // turnIntoCirclePlatform(mesh,  Radius, baseMG);
         makeCollision(mesh.vertices);
-        mainMesh.RecalculateBounds();
+
+
+        topSurface = new Vector3[totalSurfaceVerts];
+        for (int i = 0; i < totalSurfaceVerts; i++) {
+            topSurface[i] = mesh.vertices[i];
+        }
 
         if (callback != null) {
-            callback();
+            callback(this);
         }
         mainMesh.vertices = mesh.vertices;
 
         mainMesh.uv = mesh.uv;
 
         mainMesh.triangles = mesh.triangles;
+        mainMesh.RecalculateBounds();
+
+    }
 
 
+    private void turnIntoCirclePlatform(Mesh mesh,  float radius,MapGenerator MG) {
+        Vector3[] currVerts = MG.getSurfaceVertsInGlobalSpace();
+        Vector3[] spreadVerts = MG.getSpreadSurfaceVertsInGlobalSpace();
+        float anglePercent = transform.position.x / MG.RightEdge.x;
+//        Debug.Log("angle percent: " + anglePercent);
+//        Debug.Log("position: " + transform.position.x);
+        int spawnVertIndex = (int)(anglePercent * (currVerts.Length - 1));
+        Vector3 spawnLoc = currVerts[spawnVertIndex];
+        transform.position = spawnLoc;
+
+        float rotationAmount = Vector3.SignedAngle( spawnLoc,Vector3.up,Vector3.back);
+      //  Debug.Log(rotationAmount);
+            transform.Rotate(0, 0, rotationAmount);
+/*
+        Vector3[] verts = mesh.vertices;
+
+        float startingAngle = -transform.position.x / (baseSurfaceGlobal[baseSurfaceGlobal.Length - 1].x- baseSurfaceGlobal[0].x) * 360f;
+
+        //Debug.Log("starting angle: "+startingAngle);
+        //Debug.Log("position: " + transform.position.x);
+        Debug.Log("end base x: " + (baseSurfaceGlobal[baseSurfaceGlobal.Length - 1].x - baseSurfaceGlobal[0].x));
+        for (int i = 0; i < verts.Length; i++) {
+            Vector3 to = Vector3.up * (verts[i].y + radius);
+            //Debug.Log(to);
+            float angle =  -verts[i].x / (baseSurfaceGlobal[baseSurfaceGlobal.Length - 1].x - baseSurfaceGlobal[0].x) * 360f+startingAngle;
+            to = Quaternion.Euler(0, 0, angle) * to;
+            verts[i] = to;
+
+           // Debug.Log("angle: " + angle);
+        }
+        transform.position = Vector3.zero;
+        mesh.vertices = verts;
+*/
     }
 
 
@@ -118,7 +192,9 @@ void Update () {
         for (int v = 0; v < resZ; v++) {
             for (int u = 0; u < totalSurfaceVerts; u++) {
                 // uvs[u + v * totalSurfaceVerts] = new Vector2((float)u / (totalSurfaceVerts - 1), (float)v / (resZ - 1));
-                uvs[u + v * totalSurfaceVerts] = new Vector2((float)u * 0.1f, (float)v * 0.1f);
+                //uvs[u + v * totalSurfaceVerts] = new Vector2((float)u * 0.1f, (float)v * 0.1f);
+                uvs[u + v * totalSurfaceVerts] = new Vector2(vertices[u + v * totalSurfaceVerts].x * 0.1f, vertices[u + v * totalSurfaceVerts].y * 0.1f);
+
 
             }
         }
@@ -358,6 +434,7 @@ ref x);
         vertices[totalSurfaceVerts] = new Vector3(vertices[0].x, vertices[0].y - thickness);
 
         RightEdge = vertices[totalSurfaceVerts-1];
+        
 
     }
     private Vector3 platformStraight(Vector3[] vertices,Vector3 prvVert,int numOfVerts,int maxVertIndex,
@@ -385,14 +462,20 @@ ref x);
 
     public Vector3[] getSurfaceVerts() {
         Vector3[] surfVerts = new Vector3[totalSurfaceVerts];
-        for (int i = 0; i < totalSurfaceVerts; i++)
-            surfVerts[i] = mainMesh.vertices[i];
+        for (int i = 0; i < topSurface.Length; i++)
+            surfVerts[i] = topSurface[i] + transform.position;
         return surfVerts;
     }
     public Vector3[] getSurfaceVertsInGlobalSpace() {
         Vector3[] surfVerts = new Vector3[totalSurfaceVerts];
-        for (int i = 0; i < totalSurfaceVerts; i++)
-            surfVerts[i] = mainMesh.vertices[i]+transform.position;
+        for (int i = 0; i < topSurface.Length; i++)
+            surfVerts[i] = topSurface[i]+transform.position;
+        return surfVerts;
+    }
+    public Vector3[] getSpreadSurfaceVertsInGlobalSpace() {
+        Vector3[] surfVerts = new Vector3[totalSurfaceVerts];
+        for (int i = 0; i < topSurfaceSpread.Length; i++)
+            surfVerts[i] = topSurfaceSpread[i] + positionSpread;
         return surfVerts;
     }
     public Vector3[] tranlateVertsToLocalSpace(Vector3[] verts) {
@@ -438,7 +521,7 @@ ref x);
             if (minDistance(predictedVert, surfaceToAvoid) < jumpHeight*1.3f) {
                 preventedCollision[pcindex] = predictedVert;
                 pcindex++;
-               Debug.Log("prevented collision");
+              // Debug.Log("prevented collision");
                 platformDirection = 1;
             }
 
@@ -514,10 +597,10 @@ ref x);
 
    
     private void OnDrawGizmosSelected() {
-       // Debug.Log("drawing gizmox");
+        // Debug.Log("drawing gizmox");
         //Gizmos.DrawSphere(Vector3.zero, 5f);
-       
-        Vector3[] GS1CurrentSurface = tranlateVertsToGlobalSpace(currentSurface);
+        return;
+        Vector3[] GS1CurrentSurface = tranlateVertsToGlobalSpace(topSurface);
         Vector3[] GSCurrentSurface = tranlateVertsToGlobalSpace(preventedCollision);
         foreach (Vector3 v in GSCurrentSurface) {
             Gizmos.DrawSphere(v, 0.2f);
