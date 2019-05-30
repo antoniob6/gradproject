@@ -12,7 +12,7 @@ public class CharacterController2DwithGravity : NetworkBehaviour
     public Transform center;
     public float maxMoveSpeed = 20f;
     public float moveForce = 25f;
-    [SerializeField] private float m_JumpForce = 400f;							// Amount of force added when the player jumps.
+    [SerializeField] private float m_JumpForce = 30f;							// Amount of force added when the player jumps.
 	[Range(0, 1)] [SerializeField] private float m_CrouchSpeed = .36f;			// Amount of maxSpeed applied to crouching movement. 1 = 100%
 	[Range(0, .3f)] [SerializeField] private float m_MovementSmoothing = .05f;	// How much to smooth out the movement
 	[SerializeField] private bool m_AirControl = false;							// Whether or not a player can steer while jumping;
@@ -84,8 +84,11 @@ public class CharacterController2DwithGravity : NetworkBehaviour
 	}
 
 
-	public void Move(float move, bool crouch, bool jump)
+	public void Move(float movePercentage, bool crouch, bool jump)
 	{
+        if (GravitySystem.instance.isReverseGravity) {
+            movePercentage *= -1;
+        }
 		// If crouching, check to see if the character can stand up
 		if (!crouch)
 		{
@@ -110,7 +113,7 @@ public class CharacterController2DwithGravity : NetworkBehaviour
 				}
 
 				// Reduce the speed by the crouchSpeed multiplier
-				move *= m_CrouchSpeed;
+				movePercentage *= m_CrouchSpeed;
 
 				// Disable one of the colliders when crouching
 				if (m_CrouchDisableCollider != null)
@@ -134,42 +137,71 @@ public class CharacterController2DwithGravity : NetworkBehaviour
           //  Quaternion targetRotatoion = Quaternion.FromToRotation(transform.up, gravityUp) * transform.rotation;
           //  transform.rotation = Quaternion.Slerp(transform.rotation, targetRotatoion, 50 * Time.deltaTime);
             // Move the character by finding the target velocity
-            Vector3 targetVelocity = (transform.right.normalized * move * 10f) +Vector3.Project(m_Rigidbody2D.velocity,transform.up);
+            //Vector3 targetVelocity = (transform.right.normalized * movePercentage * 10f) +Vector3.Project(m_Rigidbody2D.velocity,transform.up);
             //new Vector2(move * 10f, m_Rigidbody2D.velocity.y);
             // targetVelocity = Quaternion.Euler(0, 0, transform.rotation.z/Mathf.PI*360) * targetVelocity;
             //Debug.Log(transform.rotation.z / Mathf.PI * 360);
-            Vector3 horizontalSpeed=Vector3.Project(m_Rigidbody2D.velocity, transform.right);
+            float horizontalSpeed=Vector3.Dot(m_Rigidbody2D.velocity, transform.right);
+            
+            //Debug.Log("right:" +transform.right+"vel: "+ m_Rigidbody2D.velocity+"dor: " + horizontalSpeed);
             // m_Rigidbody2D.velocity = Vector3.SmoothDamp(m_Rigidbody2D.velocity, targetVelocity, ref m_Velocity, m_MovementSmoothing);
-           // Debug.Log(horizontalSpeed);
+            // Debug.Log(horizontalSpeed);
 
-            if (move > 0 && horizontalSpeed.x < maxMoveSpeed) {
-                if(horizontalSpeed.x>0)
-                    m_Rigidbody2D.AddForce(transform.right.normalized * move * moveForce);
-                else
-                    m_Rigidbody2D.AddForce(transform.right.normalized * move * moveForce*3);
-            } else if (move < 0 && horizontalSpeed.x > -maxMoveSpeed) {
-                if (horizontalSpeed.x < 0)
-                    m_Rigidbody2D.AddForce(transform.right.normalized * move * moveForce);
-                else
-                    m_Rigidbody2D.AddForce(transform.right.normalized * move * moveForce * 3);
+            moveForce = GravitySystem.instance.runningSpeed;
 
-            } else {//not trying to move
-                m_Rigidbody2D.AddForce(transform.right.normalized * horizontalSpeed.x *-1f);
+
+            //Debug.Log("speed reached: " + horizontalSpeed.x);
+            if (movePercentage > 0 && horizontalSpeed < maxMoveSpeed) {
+                if (horizontalSpeed > maxMoveSpeed) {
+                    Debug.Log("error maximum speed reached: " + horizontalSpeed);
+                }
+                if (Mathf.Abs(horizontalSpeed) > 0.1) {
+                   // Debug.Log("player is trying to move sideways");
+                }
+                if (horizontalSpeed>0)
+                    m_Rigidbody2D.AddForce(transform.right.normalized * movePercentage * moveForce);
+                else
+                    m_Rigidbody2D.AddForce(transform.right.normalized * movePercentage * moveForce*3);
+            } else if (movePercentage < 0 && horizontalSpeed > -maxMoveSpeed) {
+                if (horizontalSpeed < -maxMoveSpeed) {
+                    Debug.Log("error maximum speed reached: " + horizontalSpeed);
+                }
+                if (horizontalSpeed < 0)
+                    m_Rigidbody2D.AddForce(transform.right.normalized * movePercentage * moveForce);
+                else
+                    m_Rigidbody2D.AddForce(transform.right.normalized * movePercentage * moveForce * 3);
+
+            }else{//add drag
+                m_Rigidbody2D.AddForce(transform.right.normalized * horizontalSpeed *-1f);
             }
 
+
+
             // If the input is moving the player right and the player is facing left...
-            if (move > 0 && !m_FacingRight)
+            if (movePercentage > 0 && !m_FacingRight)
 				Flip();
-			else if (move < 0 && m_FacingRight)
+			else if (movePercentage < 0 && m_FacingRight)
 				Flip();
 			
 		}
 		// If the player should jump...
 		if (m_Grounded && jump)
 		{
+            if (PC) {
+                if (PC.PCO) {
+                    PlayerData PD = PC.PCO.GetComponent<PlayerData>();
+                    if (PD) {
+                        PD.CmdplayerJumped();
+                    }
+                }
+            }
 			// Add a vertical force to the player.
 			m_Grounded = false;
-			m_Rigidbody2D.AddForce(transform.up.normalized* m_JumpForce);
+            float gravitySqrt = Mathf.Sqrt(GravitySystem.instance.gravityForce);
+            float jumpHeight = Mathf.Sqrt(GravitySystem.instance.jumpHeight);
+            float jumpForce = m_JumpForce * jumpHeight * gravitySqrt;
+
+            m_Rigidbody2D.AddForce(transform.up.normalized* jumpForce);
 		}
 	}
 
@@ -188,8 +220,8 @@ public class CharacterController2DwithGravity : NetworkBehaviour
         theScale.x *= -1;
         transform.localScale = theScale;
 
-
-        PC.PCO.facingRight = m_FacingRight;
+        if(PC && PC.PCO)
+            PC.PCO.facingRight = m_FacingRight;
     }
 
 

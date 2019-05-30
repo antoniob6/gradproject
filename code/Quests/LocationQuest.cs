@@ -19,33 +19,27 @@ public class LocationQuest:Quest{
         players = _players;
 
         reward = Random.Range(50, 500);
-        questMessage ="find the candy first and get "+ reward+" points";
+        questMessage ="be the first to find the Blue candy";
         GM = _GM;
         threshold = 2f;
         updateQuestMessage();
 
     }
-    private void init()
+    public override void init()
     {
 
         Random.InitState(System.DateTime.Now.Millisecond);
         //spawnPosition = new Vector2(Random.Range(-spawnrange, spawnrange), GM.transform.position.y+10);
 
-        spawnPosition = GM.MM.getRandomPosition();
-        //Debug.Log(spawnPosition);
-        spawnPosition += GravitySystem.instance.getUpDirection(spawnPosition);
+        spawnPosition = GM.MM.getRandomPositionAboveMap();
         //Debug.Log(spawnPosition);
         foundable =GM.networkSpawn("locationPrefab",spawnPosition);
         //GM.setTimeLimit(30f);
     }
-    bool initd = false;
+
     public override void tick() {
         base.tick();
 
-        if (!initd) {
-            init();
-            initd = true;
-        }
         if (isComplete)
             return;
 
@@ -53,9 +47,6 @@ public class LocationQuest:Quest{
         if (!foundable) {
             if(!isComplete)
                questCompleted();
-            isComplete = true;
-            
-            
         }
 
         foreach (GameObject p in players)

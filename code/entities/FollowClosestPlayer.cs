@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -7,7 +8,7 @@ public class FollowClosestPlayer : NetworkBehaviour {
     public Animator animator;
     public Collider2D playerBoundingCollider;
     [SerializeField] private float speed = 3f;
-    [SerializeField] private float m_JumpForce = 400f;
+    private float m_JumpForce =100;
     [Range(0, .3f)] [SerializeField] private float m_MovementSmoothing = .05f;
     [SerializeField]private float focusTimePeriod =3.0f;
 
@@ -75,8 +76,13 @@ public class FollowClosestPlayer : NetworkBehaviour {
 
     void tick() {
         float move = speed;
-        if (target.transform.position.x < transform.position.x)//if the object is to the left
+        // if (target.transform.position.x < transform.position.x)//if the object is to the left
+        //    move = -speed;
+
+        if (isTargetToTheLeft()) {
             move = -speed;
+        }
+
 
         Vector3 targetVelocity = (transform.right.normalized * move ) + Vector3.Project((Vector3)(m_Rigidbody2D.velocity), transform.up);
         m_Rigidbody2D.velocity = Vector3.SmoothDamp(m_Rigidbody2D.velocity, targetVelocity, ref m_Velocity, m_MovementSmoothing);
@@ -86,8 +92,22 @@ public class FollowClosestPlayer : NetworkBehaviour {
             if(animator)
                 animator.SetTrigger("jump");
             m_Grounded = false;
-            m_Rigidbody2D.AddForce(transform.up.normalized * m_JumpForce);  
+            float gravitySqrt = Mathf.Sqrt(GravitySystem.instance.gravityForce);
+            float jumpHeight = Mathf.Sqrt(GravitySystem.instance.jumpHeight);
+            float jumpForce = m_JumpForce * jumpHeight * gravitySqrt;
+
+            m_Rigidbody2D.AddForce(transform.up.normalized * jumpForce);
+
+           // m_Rigidbody2D.AddForce(transform.up.normalized * m_JumpForce);  
         }
+    }
+
+    private bool isTargetToTheLeft() {
+        Vector2 A = transform.up;
+        Vector2 B = target.transform.position;
+        Debug.Log("if negative then left: "+Mathf.Sign( -A.x * B.y + A.y * B.x));
+        return -A.x * B.y + A.y * B.x < 0;
+        
     }
 
     GameObject findClosestTarget() {

@@ -42,12 +42,13 @@ public class MapGenerator: NetworkBehaviour {
 
     private bool finished = false;
     // Use this for initialization
-    private EdgeCollider2D edgeCollider;
+    //private EdgeCollider2D edgeCollider;
+    private PolygonCollider2D edgeCollider;
     void Start () {
         MeshFilter filter = gameObject.GetComponent<MeshFilter>();
         mainMesh = filter.mesh;
 
-        edgeCollider = gameObject.GetComponent<EdgeCollider2D>();
+        //edgeCollider = gameObject.GetComponent<EdgeCollider2D>();
 
         oldSeed = seed;
     }
@@ -70,9 +71,9 @@ public class MapGenerator: NetworkBehaviour {
 
     [SyncVar(hook = "onChange")] public bool createBaseMapVerts = false;
     public void onChange(bool v) {
-        Debug.Log("bool changed creating map on client");
+       // Debug.Log("bool on client");
         createBaseMapVerts = v;
-        updateMap();
+       // updateMap();
     }
 
     public void updateMap(MapGeneratorFunctionDelegate callback =null) {
@@ -91,8 +92,9 @@ public class MapGenerator: NetworkBehaviour {
             topSurfaceSpread[i] = mainMesh.vertices[i];
         }
 
-        if (isCircle)
-            turnIntoCircle(mainMesh, mainMesh.vertices[0], Radius);
+        if (isCircle) {
+            //turnIntoCircle(mainMesh, mainMesh.vertices[0], Radius);
+        }
         makeCollision(mainMesh.vertices);
         mainMesh.RecalculateBounds();
         topSurface = new Vector3[totalSurfaceVerts];
@@ -137,19 +139,23 @@ public class MapGenerator: NetworkBehaviour {
         if (callback != null) {
             callback(this);
         }
+        assignMainMesh(mesh);
+
+    }
+
+    private void assignMainMesh(Mesh mesh) {
         mainMesh.vertices = mesh.vertices;
 
         mainMesh.uv = mesh.uv;
 
         mainMesh.triangles = mesh.triangles;
         mainMesh.RecalculateBounds();
-
     }
 
 
     private void turnIntoCirclePlatform(Mesh mesh,  float radius,MapGenerator MG) {
         Vector3[] currVerts = MG.getSurfaceVertsInGlobalSpace();
-        Vector3[] spreadVerts = MG.getSpreadSurfaceVertsInGlobalSpace();
+        //Vector3[] spreadVerts = MG.getSpreadSurfaceVertsInGlobalSpace();
         float anglePercent = transform.position.x / MG.RightEdge.x;
 //        Debug.Log("angle percent: " + anglePercent);
 //        Debug.Log("position: " + transform.position.x);
@@ -228,13 +234,21 @@ public class MapGenerator: NetworkBehaviour {
 
 
     }
+
+    public void createMapFromSurfacePlane(Vector3[] surface) {
+        Mesh m= createMeshFromSurfacePlane(surface);
+        makeCollision(m.vertices);
+        assignMainMesh(m);
+
+    }
+
     private Vector3[] createMeshVerticesFromSurface(Vector3[] surface) {
         float angle = 180;
         Vector3[] vertices = new Vector3[surface.Length * 2];
         for(int i = 0; i < surface.Length; i++) {
             vertices[i] = surface[i];
         }
-        vertices[surface.Length] = new Vector3(surface[0].x, surface[0].y - thickness);
+        
         for (int x = 2; x < surface.Length; x++) {//generate bottom surface verticies
 
 
@@ -253,23 +267,34 @@ public class MapGenerator: NetworkBehaviour {
             bottomVertLoc = bottomVertLoc * thickness;
             bottomVertLoc = Quaternion.Euler(0, 0, desiredAngle) * bottomVertLoc;//rotate vector
 
+            if (x == 2) {
+                vertices[surface.Length] = surface[0] - (Vector3)bottomVertLoc;
+            }
+            if (x == surface.Length - 1) {
+                vertices[surface.Length * 2 - 1] = surface[surface.Length - 1] - (Vector3)bottomVertLoc;
+            }
+
             bottomVertLoc = (Vector2)vertices[x - 1] - bottomVertLoc;
             vertices[(x - 1) + surface.Length] = bottomVertLoc;
 
+
+
         }
-        vertices[surface.Length * 2 - 1] = new Vector3(vertices[surface.Length - 1].x, vertices[surface.Length - 1].y - thickness);
+       
      //   Debug.Log(vertices[surface.Length * 2 - 1]);
         return vertices;
     }
 
+
+    Vector3[] baseVertsGizmos;
     public void createMesh(Mesh mesh)
     {
         mesh.Clear();
         Vector3[] vertices = new Vector3[totalSurfaceVerts * resZ];
 
         generateSurfaceVerts(vertices,jumpHeight,vertsPerPlatform,seed, jumpHeight);
-
-        vertices=createBottomVertices(vertices);
+        baseVertsGizmos = vertices;
+        vertices=createAllVerticesFromSurface(vertices);
 
         Vector2[] uvs = new Vector2[vertices.Length];
         for (int v = 0; v < resZ; v++){
@@ -311,14 +336,18 @@ public class MapGenerator: NetworkBehaviour {
 
     }
 
-    private Vector3[] createBottomVertices(Vector3[] vertices) {
+    private Vector3[] createAllVerticesFromSurface(Vector3[] surfaceVertices) {
         float angle = 180;
         for (int x = 2; x < totalSurfaceVerts; x++) {//generate bottom surface verticies
 
 
-            Vector2 to = new Vector2(vertices[x].x - vertices[x - 1].x, vertices[x].y - vertices[x - 1].y);
-            Vector2 from = new Vector2(vertices[x - 2].x - vertices[x - 1].x, vertices[x - 2].y - vertices[x - 1].y);
+            Vector2 to = new Vector2(surfaceVertices[x].x - surfaceVertices[x - 1].x, surfaceVertices[x].y - surfaceVertices[x - 1].y);
+            Vector2 from = new Vector2(surfaceVertices[x - 2].x - surfaceVertices[x - 1].x, surfaceVertices[x - 2].y - surfaceVertices[x - 1].y);
             angle = Vector2.SignedAngle(to, from);
+            if (Math.Abs(angle) <= 0.1) {
+                Debug.Log("divide by zero");
+                return surfaceVertices;
+            }
             float desiredAngle;
             if (angle >= 0)
                 desiredAngle = angle / 2;
@@ -331,13 +360,39 @@ public class MapGenerator: NetworkBehaviour {
             bottomVertLoc = bottomVertLoc * thickness;
             bottomVertLoc = Quaternion.Euler(0, 0, desiredAngle) * bottomVertLoc;//rotate vector
 
-            bottomVertLoc = (Vector2)vertices[x - 1] - bottomVertLoc;
-            vertices[(x - 1) + totalSurfaceVerts] = bottomVertLoc;
+            if (x == 2) {
+                surfaceVertices[totalSurfaceVerts] = surfaceVertices[0] - (Vector3)bottomVertLoc;
+            }
+            if (x == totalSurfaceVerts - 1) {
+                surfaceVertices[totalSurfaceVerts * 2 - 1] =
+                    surfaceVertices[totalSurfaceVerts - 1] - (Vector3)bottomVertLoc;
+
+                surfaceVertices[totalSurfaceVerts * 2 - 2] =
+                    surfaceVertices[totalSurfaceVerts - 1] - (Vector3)bottomVertLoc;
+                //Debug.Log("last vert: " + surfaceVertices[totalSurfaceVerts * 2 - 1]);
+                //Debug.Log("index: " + (totalSurfaceVerts * 2 - 1) + " total: " + surfaceVertices.Length);
+            }
+            //Vector3 localDownOffset = bottomVertLoc;
+            bottomVertLoc = (Vector2)surfaceVertices[x - 1] - bottomVertLoc;
+            surfaceVertices[(x - 2) + totalSurfaceVerts] = bottomVertLoc;
+
+
 
         }
-        vertices[totalSurfaceVerts * resZ - 1] = new Vector3(vertices[totalSurfaceVerts - 1].x, vertices[totalSurfaceVerts - 1].y - thickness);
+        //surfaceVertices[totalSurfaceVerts * resZ - 1] = new Vector3(surfaceVertices[totalSurfaceVerts - 1].x, surfaceVertices[totalSurfaceVerts - 1].y - thickness);
+        //Debug.Log("last vert: " + surfaceVertices[totalSurfaceVerts * 2 - 1]);
 
-        return vertices;
+        for(int i = 0; i <surfaceVertices.Length;i++) {
+            if (surfaceVertices[i].sqrMagnitude <= 0.5) {
+                if(i<totalSurfaceVerts)
+                    Debug.Log("found zero 1nd row: " + i);
+                else
+                    Debug.Log("found zero 2nd row: " + i+", total: " + surfaceVertices.Length);
+            }
+
+
+        }
+        return surfaceVertices;
     }
  
 
@@ -368,12 +423,15 @@ public class MapGenerator: NetworkBehaviour {
             index++;
         }
         if (!edgeCollider) {
-            edgeCollider = gameObject.GetComponent<EdgeCollider2D>();
+            edgeCollider = gameObject.GetComponent<PolygonCollider2D>();
+            //edgeCollider = gameObject.GetComponent<EdgeCollider2D>();
             //print("looking for collider componenet");
         }
+        edgeCollider.points = colliderPath;
+        edgeCollider.pathCount = 1;
+        edgeCollider.SetPath(0, colliderPath);
 
-
-         edgeCollider.points = colliderPath;
+        //edgeCollider.points = colliderPath;
     }
 
     private void generateSurfaceVerts(Vector3[] vertices, float stepHight, int stepWidth, int seed,float jumpHeight)
@@ -514,15 +572,17 @@ ref x);
             int platformDirection = Random.Range(0, 5);
 
 
-            Vector3[] temp =  createPlatformSurface(prvVert,
+            Vector3[] predictedSection =  createPlatformSurface(prvVert,
                         Vector3.down * (jumpHeight/vertsPerPlatform) + Vector3.right * unitWidth,vertsPerPlatform);
-            Vector3 predictedVert = temp[temp.Length-1]+Vector3.down*thickness;
-
-            if (minDistance(predictedVert, surfaceToAvoid) < jumpHeight*1.3f) {
-                preventedCollision[pcindex] = predictedVert;
-                pcindex++;
-              // Debug.Log("prevented collision");
-                platformDirection = 1;
+            //Vector3 predictedVert = predictedSection[predictedSection.Length-1]+Vector3.down*thickness;
+            foreach (Vector3 predictedVert in predictedSection) {
+                if (minDistance(predictedVert, surfaceToAvoid) < jumpHeight * 1.3f) {
+                    preventedCollision[pcindex] = predictedVert;
+                    pcindex++;
+                    //Debug.Log("prevented collision: "+ predictedVert);
+                    platformDirection = 1;//curve up
+                    break;
+                }
             }
 
             if (platformDirection == 0 || platformDirection == prvDirection && platformDirection!= 1) {
@@ -595,11 +655,142 @@ ref x);
         return Vector3.Magnitude(position - points[getClosestPoint(position, points)]);
     }
 
-   
+    [ClientRpc]
+    public void RpcSyncSeedOnBase(int _seed, float _length, float _jumpHeight, bool _isCircle) {
+        //Debug.Log("updating base by the seed");
+
+        if (!mainMesh) {
+            mainMesh = gameObject.GetComponent<MeshFilter>().mesh;
+            Debug.Log("main mesh couldn't be found, looking again.");
+        }
+
+        seed = _seed;
+        length = _length;
+        totalSurfaceVerts = (int)_length;
+        jumpHeight = _jumpHeight;
+
+        updateMap();//till here is a ready to use flat map
+        if (_isCircle) {//circlize the ready map
+
+            float radius = length / Mathf.PI / 2;
+            Vector3 begin = transform.position;
+            Vector3 end = RightEdge;
+            Vector3[] globalBaseVerts = mainMesh.vertices;
+            Vector3[] rotatedBaseVerts = calcCircularVerts(globalBaseVerts, radius, begin, end);
+            createAndAssignMeshFromAllVertsWithCollisions(rotatedBaseVerts);
+        }
+
+    }
+    public void createAndAssignMeshFromAllVertsWithCollisions(Vector3[] surfaceVertsInLocalSpace) {
+        Vector3[] allVertsInLocalSpace = createAllVerticesFromSurface(surfaceVertsInLocalSpace);
+        mainMesh.vertices = allVertsInLocalSpace;
+        mainMesh.uv = calculateUVs(allVertsInLocalSpace);
+        mainMesh.triangles = calculateTriangles(allVertsInLocalSpace);
+
+        makeCollision(mainMesh.vertices);
+        mainMesh.RecalculateBounds();
+    }
+    public void createAndAssignMeshFromSurfaceWithCollisions(Vector3[] surfaceVertsInLocalSpace) {
+        Vector3[] allVertsInLocalSpace = createAllVerticesFromSurface(surfaceVertsInLocalSpace);
+        mainMesh.vertices = allVertsInLocalSpace;
+        mainMesh.uv = calculateUVs(allVertsInLocalSpace);
+        mainMesh.triangles = calculateTriangles(allVertsInLocalSpace);
+
+        makeCollision(mainMesh.vertices);
+        mainMesh.RecalculateBounds();
+    }
+    
+    //should be called for all the maps by the map manager
+    [ClientRpc]public void RpcSyncVerts(Vector3[] allVertsInLocalSpace) {
+        if (!mainMesh) {
+            mainMesh = gameObject.GetComponent<MeshFilter>().mesh;
+            Debug.Log("main mesh couldn't be found, looking again.");
+        }
+
+
+        //Vector3[] allVertsInLocalSpace = tranlateVertsToLocalSpace(allVertsInGlobalSpace);
+
+        mainMesh.vertices = allVertsInLocalSpace;
+        mainMesh.uv = calculateUVs(allVertsInLocalSpace);
+        mainMesh.triangles = calculateTriangles(allVertsInLocalSpace);
+
+        makeCollision(mainMesh.vertices);
+        mainMesh.RecalculateBounds();
+    }
+
+    private Vector3[] calcCircularVerts(Vector3[] vertsInGlobal, float radius, Vector3 start, Vector3 end) {
+        Vector3[] verts = vertsInGlobal;//to shorten the name
+        //Debug.Log("rotating chosen object");
+
+        for (int i = 0; i < verts.Length; i++) {
+            float height = radius + (verts[i].y - start.y);//clalculate distance from center
+            Vector3 to = Vector3.up * height;
+
+            //calculate rotation
+            if (end.x - start.x <= 0.1f) {
+                Debug.Log("divide by zero");
+                return vertsInGlobal;
+            }
+
+            float theta = verts[i].x / (end.x - start.x) * 360f;
+
+            //rotate clockwise
+            to = Quaternion.Euler(0, 0, -theta) * to;
+
+            //Debug.Log("before: " + verts[i] + " after: " + to);
+            verts[i] = to;
+        }
+
+        return verts;
+
+    }
+
+
+    private int[] calculateTriangles(Vector3[] allVertsInLocalSpace) {
+        int nbFaces = (totalSurfaceVerts - 1) * (resZ - 1);
+        int[] triangles = new int[nbFaces * 6];
+        int t = 0;
+        for (int faceZ = 0; faceZ < resZ - 1; faceZ++) {
+            for (int faceX = 0; faceX < totalSurfaceVerts - 1; faceX++) {
+                int i = faceX + faceZ * totalSurfaceVerts;
+
+                triangles[t++] = i + totalSurfaceVerts;
+                triangles[t++] = i;
+                triangles[t++] = i + 1;
+
+
+                triangles[t++] = i + totalSurfaceVerts;
+                triangles[t++] = i + 1;
+                triangles[t++] = i + totalSurfaceVerts + 1;
+
+            }
+        }
+        //Debug.Log("triangles calculated: " + triangles.Length);
+        return triangles;
+    }
+
+    private Vector2[] calculateUVs(Vector3[] allVertsInLocalSpace) {
+        Vector2[] uvs = new Vector2[allVertsInLocalSpace.Length];
+        for (int v = 0; v < resZ; v++) {
+            for (int u = 0; u < totalSurfaceVerts; u++) {
+                uvs[u + v * totalSurfaceVerts] = new Vector2(allVertsInLocalSpace[u + v * totalSurfaceVerts].x * 0.1f,
+                                        allVertsInLocalSpace[u + v * totalSurfaceVerts].y * 0.1f);
+            }
+        }
+        //Debug.Log("uvs calculated: "+ uvs.Length);
+        return uvs;
+    }
+    /*
     private void OnDrawGizmosSelected() {
-        // Debug.Log("drawing gizmox");
-        //Gizmos.DrawSphere(Vector3.zero, 5f);
-        return;
+        foreach (Vector3 v in baseVertsGizmos) {
+            Gizmos.DrawSphere(v, 0.2f);
+        }
+        foreach (Vector3 v in preventedCollision) {
+            Gizmos.DrawSphere(v, 0.2f);
+        }
+        Debug.Log("drawing gizmos");
+
+        /*
         Vector3[] GS1CurrentSurface = tranlateVertsToGlobalSpace(topSurface);
         Vector3[] GSCurrentSurface = tranlateVertsToGlobalSpace(preventedCollision);
         foreach (Vector3 v in GSCurrentSurface) {
@@ -608,8 +799,21 @@ ref x);
         foreach (Vector3 v in GS1CurrentSurface) {
             Gizmos.DrawCube(v, new Vector3(0.1f, 0.1f, 0.1f));
         }
+        */
+    //}
+
+    private void OnDrawGizmos() {
+        //Debug.Log("drawing gizmos on map generator");
+        // Gizmos.DrawSphere(Vector3.zero, 5f);
+        // foreach (Vector3 v in generatedMap.GetComponent<MapGenerator>().getSurfaceVerts()) {
+        // Gizmos.DrawSphere(v, 0.5f);
+
+        // }
     }
-    
-   
+
+
+
+
+
 
 }

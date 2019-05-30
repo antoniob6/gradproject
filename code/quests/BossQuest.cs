@@ -1,6 +1,7 @@
 ﻿/*
- *a location quest that inhertes from the quest super class
- * that monitors the players, and when the first one get close to the goal, he/she wins 
+ *a boss quest that inhertes from the quest super class
+ * that monitors the players, and if the boss is killed withing the time limit
+ * the players get the reward
  * */
 using System.Collections.Generic;
 using UnityEngine;
@@ -11,39 +12,44 @@ public class BossQuest:Quest{
 
     private float threshold;
 
-    private Vector3 spawnPosition;
-    private float spawnrange;
+
+
     private GameObject bossGO;
 
 
 
-    public BossQuest(List<GameObject> _players, GameObject _center, 
-            int _reward, string _questMessage, GameManager _GM, float _threshold=10,float _spawnrange = 5)
-    {
+    public BossQuest(List<GameObject> _players, GameManager _GM) : base() {
         players = _players;
-        center = _center;
-        reward = _reward;
-        questMessage = _questMessage;
         GM = _GM;
-        threshold = _threshold;
-        spawnrange = _spawnrange;
-        init();
-    }
-    private void init()
-    {
+
+
+        GM.MM.createNewMapBaseOnly();
+        reward = Random.Range(150, 1000);
+
+        questMessage = "defeat the boss";
+        
+
         updateQuestMessage();
-        Random.InitState(System.DateTime.Now.Millisecond);
-        spawnPosition = new Vector2(Random.Range(-spawnrange, spawnrange), GM.transform.position.y+10);
-        bossGO=GM.networkSpawn("bossPrefab",spawnPosition);
+
+    }
+
+    public override void init() {
+        base.init();
+        Vector3 spawnPosition = GM.MM.getRandomPositionAboveMap();
+        bossGO = GM.networkSpawn("bossPrefab", spawnPosition);
     }
     public override void tick() {
         if (isComplete)
             return;
+        base.tick();
+
 
         if (!bossGO) {
+            foreach(GameObject p in players) {
+                winners.Add(p);
+            }
             if(!isComplete)
-               questCompleted();
-            isComplete = true;     
+               questCompleted();  
         }
 
 

@@ -9,8 +9,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class PlanetaryRotation : MonoBehaviour {
-    private GameObject center;
-    private GravitySystem GS;
+
+
     // Use this for initialization
     void Start () {
 
@@ -18,21 +18,21 @@ public class PlanetaryRotation : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        if (GS == null)
-            GS = FindObjectOfType<GravitySystem>();
-        if (GS.gravityDirection==GravitySystem.GravityType.ToCenter)
-        {
-            if (center == null)
-                center = (GameObject.FindGameObjectsWithTag("GravityCenter"))[0];
-
-
-            Vector3 gravityUp = (transform.position - center.transform.position).normalized;
-
-            Quaternion targetRotatoion = Quaternion.FromToRotation(transform.up, gravityUp) * transform.rotation;
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotatoion, 50 * Time.deltaTime);
-
+        GameObject gs = GravitySystem.instance.gameObject;
+        if (!gs) {
+            return;
         }
-        else if(GS.gravityDirection == GravitySystem.GravityType.Down) {
+        if (GravitySystem.instance.gravityType==GravitySystem.GravityType.ToCenter ||
+            GravitySystem.instance.gravityType == GravitySystem.GravityType.ToOut)
+        {
+            Vector3 gravityUp = transform.position - gs.transform.position ;
+            Quaternion targetRotatoion = Quaternion.FromToRotation(transform.up, gravityUp) * transform.rotation;
+            //transform.rotation = Quaternion.Slerp(transform.rotation, targetRotatoion, 50 * Time.deltaTime);
+            transform.rotation = targetRotatoion;
+        }
+        else if(GravitySystem.instance.gravityType == GravitySystem.GravityType.Down ||
+            GravitySystem.instance.gravityType == GravitySystem.GravityType.Up) {
+            if(transform.rotation!= Quaternion.identity)
             transform.rotation = Quaternion.identity;
         }
     }

@@ -19,11 +19,6 @@ public class PlayerReceiveDamage : NetworkBehaviour {
 
 	[SyncVar]public int currentHealth;
 
-	[SerializeField]
-	private string enemyTag="Enemy";
-    [SerializeField]
-    private string deathTag="Death";
-
     public float maxRecoveryTime=0.5f;
 
     [SerializeField]
@@ -46,6 +41,8 @@ public class PlayerReceiveDamage : NetworkBehaviour {
         PD = GetComponent<PlayerData>();
     }
 
+
+
     public int getHealth() {
         return currentHealth;
     }
@@ -60,21 +57,26 @@ public class PlayerReceiveDamage : NetworkBehaviour {
         lastDamageTime = Time.time;
         //Debug.Log("character triggered: "+ currentHealth);
         //hit by bullet
-        if (collider.tag == "Bullet" && collider.gameObject.GetComponent<Bullet>().owner != this.gameObject.GetComponent<PlayerReceiveDamage>()) {
-            Destroy(collider.gameObject);
-            TakeDamage(1);
+        if (collider.tag == "Bullet" ) {
+            //Destroy(collider.gameObject);
+            if (isServer && collider.gameObject.GetComponent<Bullet>().owner != gameObject.GetComponent<PlayerReceiveDamage>()) {
+                lastHitby = collider.gameObject.GetComponent<Bullet>().owner.gameObject;
+                TakeDamage(1);
+            }
+
+           
            // m_Rigidbody2D.velocity = new Vector3(0, 0, 0);
-            lastHitby = collider.gameObject.GetComponent<Bullet>().owner.gameObject;
+           
            
 
         }
         //hit by enemy
-        else if (collider.tag == this.enemyTag) {
+        else if (collider.tag == "Enemy") {
             Destroy(collider.gameObject);
             this.TakeDamage (1);
 
 			
-		} else if (collider.tag == "Boss") {
+		} else if (collider.tag == "Boss") {//the boss deals damage to the player
             //Destroy(collider.gameObject);
             //this.TakeDamage(3);
 
@@ -82,9 +84,12 @@ public class PlayerReceiveDamage : NetworkBehaviour {
   //touched the death layer
   else if (collider.tag == "Death")
         {
-            this.TakeDamage(100);
+            TakeDamage(100);
             m_Rigidbody2D.velocity = new Vector3(0, 0, 0);
 
+        } else if(collider.tag == "Candy") {
+            if(isServer)
+                PD.playerCollectedCandy();
         }
 
     }
@@ -131,8 +136,13 @@ public class PlayerReceiveDamage : NetworkBehaviour {
                     
 			}
 		}
-        
-	}
+
+
+    }
+    [Command]
+    public void CmdTakeDamage(int damage) {
+        TakeDamage(damage);
+    }
 
 
 

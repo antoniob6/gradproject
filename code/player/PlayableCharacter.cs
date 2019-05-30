@@ -31,12 +31,13 @@ public class PlayableCharacter : NetworkBehaviour {
 
 
         if (!spriteRenderer || !rigibodyComp || !animator)
-            Debug.Log("please assign componenets manually");
-        Invoke("delayed", 1f);
+            Debug.Log("please assign PC componenets manually");
+        Invoke("delayed", 2f);
         
     }
     void delayed() {
-        setDisplayName(RD.gameObject.GetComponent<PlayerData>().playerName);
+        if(RD)
+             setDisplayName(RD.gameObject.GetComponent<PlayerData>().playerName);
     }
 
 
@@ -67,12 +68,24 @@ public class PlayableCharacter : NetworkBehaviour {
     }
 
 
-
-    [ClientRpc]public void RpcPlayerDied() {
-        StartCoroutine(deathCo(3));
+    public void playerDied() {
+        if (!isServer)
+            return;
+ MapManager MM = FindObjectOfType<MapManager>();
+        if (!MM) {
+            Debug.Log("map manager not found");
+            return;
+        }
+        Vector3 newSpawnPos = MM.getRandomPositionAboveMap();
+        
+        PCO.PC.RpcPlayerDied(newSpawnPos);
+    }
+    
+    [ClientRpc]public void RpcPlayerDied(Vector3 newSpawnPos) {
+        StartCoroutine(deathCo(newSpawnPos,3));
     }
 
-    IEnumerator deathCo(float respawnTime) {
+    IEnumerator deathCo(Vector3 newSpawnPos, float respawnTime) {
         if (deathEffect) {
             GameObject DE = Instantiate(deathEffect, gameObject.transform.position, transform.rotation);
             DE.transform.parent = transform;
@@ -83,6 +96,8 @@ public class PlayableCharacter : NetworkBehaviour {
 
         Color oldSpriteColor =Color.white;
         //freze player because dead
+
+        UnityEngine.RigidbodyConstraints2D oldConstraints = rigibodyComp.constraints;
         if (rigibodyComp)
             rigibodyComp.constraints = RigidbodyConstraints2D.FreezeAll;
         if (animator)
@@ -97,7 +112,7 @@ public class PlayableCharacter : NetworkBehaviour {
 
 
         if(rigibodyComp)
-            rigibodyComp.constraints = RigidbodyConstraints2D.None;
+            rigibodyComp.constraints = oldConstraints;
         if (animator)
             animator.SetBool("IsDead", true);
         if (spriteRenderer)
@@ -105,7 +120,7 @@ public class PlayableCharacter : NetworkBehaviour {
 
 
         //respawn the player
-        transform.position = RD.initialPosition;
+        transform.position = newSpawnPos;
         RD.currentHealth =RD.maxHealth;
         RD.didWeCheckDeath = false;
 
@@ -122,6 +137,15 @@ public class PlayableCharacter : NetworkBehaviour {
     void finishedTakingDamage() {
         animator.SetBool("IsHurt", false);
     }
+
+
+
+    [ClientRpc]public void RpcTeleportObject(Vector3 newPosition) {
+        if (!hasAuthority)
+            return;
+        transform.position = newPosition;
+    }
+   
 
     
 

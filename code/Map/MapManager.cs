@@ -6,6 +6,8 @@
 
 
 
+//using System;
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -29,35 +31,50 @@ public class MapManager : NetworkBehaviour {
     private Vector3 lastPlatformEnd = Vector3.zero;
 
     MapGenerator generatedMapBase;
-    public void StartGenerating() {
+
+    bool MMinited = false;
+    private void makeSureInit() {
+        if (MMinited)
+            return;
+        MMinited = true;
         surfacesInGlobalSpace = new List<Vector3[]>();
         spreadSurfacesInGlobalSpace = new List<Vector3[]>();
         platforms = new List<MapGenerator>();
 
-        createNewMap();
-        //generatedMapBase = generateMap(transform.position,GM.currentRules);
-
     }
 
 
+
+
     private bool createdDeathBarrier = false;
+    private bool syncedTheMaps = false;
     void Update() {
         if (!isServer)
             return;
         if (!isBusyMakingMap && !finishedCreatingPlatforms) {
-            if (!createdDeathBarrier)
-                createDeathBarier();
-            platforms.Add( addPlatform(GM.currentRules));
+            if (!createdDeathBarrier) {
+                createdDeathBarrier = true;
+                //createDeathBarier();
+            }
+            MapGenerator MG = addPlatform(GM.currentRules);
+            if(MG)
+                platforms.Add(MG);
+
+        }else if (finishedCreatingPlatforms && !syncedTheMaps) {
+            syncedTheMaps = true;
+            //Debug.Log("finished making all map with platforms");
+            mapFinishedGettingCreated();
+
         }
+
 
 
 
     }
 
-    
-    
 
-    MapGenerator generateMap(Vector3 position, Rules rules=null) {
+
+    MapGenerator generateMapBase(Vector3 position, Rules rules) {
         isBusyMakingMap = true;
        GameObject GO= Instantiate(mapGeneratorPrefabs[Random.Range(0,mapGeneratorPrefabs.Length)].gameObject, position,Quaternion.identity);
         GO.transform.parent = transform;
@@ -68,7 +85,7 @@ public class MapManager : NetworkBehaviour {
         MG.updateMap(mapFinishedUpdating);
         NetworkServer.Spawn(GO);
 
-        RpcUpdateBaseMapOnClients(GO);
+        //RpcUpdateBaseMapOnClients(GO);
 
         return GO.GetComponent<MapGenerator>();
     }
@@ -148,20 +165,106 @@ public class MapManager : NetworkBehaviour {
         spreadSurfacesInGlobalSpace.Add(MG.getSpreadSurfaceVertsInGlobalSpace());
         isBusyMakingMap = false;
 
+
+
+    }
+    public void mapFinishedGettingCreated() {
+        if (GM.currentRules.isCircle) {
+            circlizeAllMaps();
+        }
+        Invoke("syncAllMaps", 0.5f);
+        Invoke("respawnAllPlayers", 2f);
+    }
+    //tells all the clients to update their maps to the same as the server's
+    private void syncAllMaps() {
+        //Debug.Log("syncing the maps with the clients");
+        //generatedMapBase.RpcSyncVerts(generatedMapBase.mainMesh.vertices);
+        generatedMapBase.RpcSyncSeedOnBase(GM.currentRules.seed, GM.currentRules.length,
+           GM.currentRules.jumpHeight, GM.currentRules.isCircle);
+        int index = 0;
+        foreach (MapGenerator m in platforms) {
+            index++;
+            if (!m) {
+                Debug.Log("map object null: " + index);
+                continue;
+            }
+            if (!m.mainMesh) {
+                Debug.Log("main mesh on map is null");
+                continue;
+            }
+            m.RpcSyncVerts(m.mainMesh.vertices);
+        }
+    }
+    //basicly distort the space, apply the distortion to the verticies 
+    public void circlizeAllMaps() {
+        surfacesInGlobalSpace.Clear();
+        Debug.Log("cirulizing the maps");
+        float radius = generatedMapBase.length / Mathf.PI / 2;
+        Vector3 begin = generatedMapBase.transform.position;
+        Vector3 end = generatedMapBase.RightEdge;
+
+        Vector3[] globalBaseVerts = generatedMapBase.getSurfaceVertsInGlobalSpace();
+
+        Vector3[] rotatedBaseVerts = calcCircularVerts(globalBaseVerts, radius, begin, end);
+        //generatedMapBase.RpcSyncVerts(rotatedBaseVerts);
+        generatedMapBase.createMapFromSurfacePlane(rotatedBaseVerts);
+        generatedMapBase.transform.position = Vector3.zero;
+        surfacesInGlobalSpace.Add(rotatedBaseVerts);
+        foreach (MapGenerator m in platforms) {
+            Vector3[] globalVerts = m.getSurfaceVertsInGlobalSpace();
+            Vector3[] rotatedVerts = calcCircularVerts(globalVerts, radius, begin, end);
+            m.createMapFromSurfacePlane(rotatedVerts);
+
+            m.transform.position = Vector3.zero;
+            surfacesInGlobalSpace.Add(rotatedVerts);
+        }
+
+
     }
 
 
-
     public void createNewMap() {
-
+        //Debug.Log("creating new map");
+        syncedTheMaps = false;
+        makeSureInit();
         deleteOldMap();
+
+        //respawnAllPlayers();
         //create new map
 
-        generatedMapBase = generateMap(transform.position,GM.currentRules);
+        generatedMapBase = generateMapBase(transform.position,GM.currentRules);
         finishedCreatingPlatforms = false;
         createdDeathBarrier = false;
 
     }
+    public void createNewMapBaseOnly() {
+        syncedTheMaps = false;
+        makeSureInit();
+        deleteOldMap();
+
+        //respawnAllPlayers();
+        //create new map
+
+        generatedMapBase = generateMapBase(transform.position, GM.currentRules);
+        finishedCreatingPlatforms = true;
+        createdDeathBarrier = true;
+
+    }
+
+    private void respawnAllPlayers() {
+        foreach(GameObject p in GM.players) {
+            if (!p)
+                continue;
+            PlayerConnectionObject PCO = p.GetComponent<PlayerConnectionObject>();
+            if (!PCO || !PCO.PC)
+                continue;
+
+            Vector3 randomPosition = getRandomPositionAboveMap();
+            PCO.PC.RpcTeleportObject(randomPosition);
+            
+        }
+    }
+
     private void deleteOldMap() {
 
         if (!generatedMapBase)
@@ -183,9 +286,17 @@ public class MapManager : NetworkBehaviour {
     }
 
     public Vector3 getRandomPosition() {
-        if (surfacesInGlobalSpace.Count == 0)
-            return Vector3.zero;
-        int randomSurfaceIndex = Random.Range(0, surfacesInGlobalSpace.Count);
+        if (surfacesInGlobalSpace.Count == 0) {
+            return new Vector3(50,50);
+        }
+        //beacause map base is always bigger 
+        bool shouldBeOnBase = Random.Range(0f, 1f) < 0.8 ? true : false;
+
+        int randomSurfaceIndex = 0;
+        if (!shouldBeOnBase) {
+            randomSurfaceIndex = Random.Range(1, surfacesInGlobalSpace.Count);
+        }
+
         Vector3[] surfaceVerts = surfacesInGlobalSpace[randomSurfaceIndex];
 
         int randomVertIndex = Random.Range(0, surfaceVerts.Length);
@@ -195,7 +306,33 @@ public class MapManager : NetworkBehaviour {
         return randomPosition;
     }
 
-    public void createDeathBarier() {
+    public Vector3 getRandomPositionAboveMap() {
+        Vector3 randomPosition = getRandomPosition();
+        if (randomPosition == Vector3.zero)
+            return randomPosition;
+
+        randomPosition += GravitySystem.instance.getUpDirection(randomPosition) * 2;
+        return randomPosition;
+
+    }
+
+    public Vector3 getMapEndPosition() {
+        if (!generatedMapBase)
+            return Vector3.zero;
+
+        Vector3[] surfaceVerts= generatedMapBase.getSurfaceVertsInGlobalSpace();
+
+        if (surfaceVerts.Length <= 0) {
+            Debug.Log("couldn't get map end");
+            return Vector3.zero;
+        }
+
+        return surfaceVerts[surfaceVerts.Length-1];
+
+
+    }
+
+        public void createDeathBarier() {
         if (GM.currentRules.isCircle) {
             //add black hole
             Debug.Log("spawned black hole");
@@ -206,7 +343,7 @@ public class MapManager : NetworkBehaviour {
             NetworkServer.Spawn(GO);
         } else {
             //add death platform
-            Debug.Log("spawned death playform");
+            //Debug.Log("spawned death platform");
             Vector3 rightend = generatedMapBase.RightEdge;
             Vector3 middle = new Vector3(rightend.x / 2, -100, 0);
 
@@ -218,8 +355,28 @@ public class MapManager : NetworkBehaviour {
         }
     }
 
-    public void circlizeAllMaps() {
 
+
+
+    private Vector3[] calcCircularVerts(Vector3[] vertsInGlobal,float radius,Vector3 start,Vector3 end) {
+        Vector3[] verts = vertsInGlobal;//to shorten the name
+        //Debug.Log("rotating chosen object");
+
+        for (int i = 0; i < verts.Length; i++) {
+            float height = radius +( verts[i].y -start.y);//clalculate distance from center
+            Vector3 to = Vector3.up * height;
+
+            //calculate rotation
+            float theta =  verts[i].x / (end.x-start.x) * 360f;
+
+            //rotate clockwise
+            to = Quaternion.Euler(0, 0,-theta) * to;
+
+            //Debug.Log("before: " + verts[i] + " after: " + to);
+            verts[i] = to;
+        }
+        
+        return verts;
 
     }
 
@@ -227,12 +384,15 @@ public class MapManager : NetworkBehaviour {
 
 
     private void OnDrawGizmos() {
-        //Debug.Log("drawing gizmos");
-       // Gizmos.DrawSphere(Vector3.zero, 5f);
-       // foreach (Vector3 v in generatedMap.GetComponent<MapGenerator>().getSurfaceVerts()) {
-           // Gizmos.DrawSphere(v, 0.5f);
+        //Debug.Log("drawing gizmos on map manager");
+        // Gizmos.DrawSphere(Vector3.zero, 5f);
 
-       // }
+       // float i = 1;
+       // foreach (Vector3 v in generatedMapBase.GetComponent<MapGenerator>().mainMesh.vertices) {
+       //    Gizmos.DrawSphere(v, 0.5f*i);
+           
+        //    i+=0.01f;
+        //}
     }
 
 }

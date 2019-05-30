@@ -34,6 +34,7 @@ GameObject:
   - component: {fileID: 114495233121634592}
   - component: {fileID: 114945512296265112}
   - component: {fileID: 114624447682358766}
+  - component: {fileID: 114338456485116062}
   m_Layer: 0
   m_Name: PlayerWithGravity
   m_TagString: PlayerObject
@@ -114,7 +115,7 @@ Transform:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1086191628742150}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5.14, y: 4.64, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 224844513940833406}
@@ -196,18 +197,18 @@ BoxCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0, y: -0.2}
+  m_Offset: {x: 0, y: -0.28042495}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 2.0625, y: 2}
+    oldSize: {x: 2.2, y: 2.1333334}
     newSize: {x: 2.0625, y: 2}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.72, y: 1.16}
+  m_Size: {x: 0.72, y: 0.99915004}
   m_EdgeRadius: 0
 --- !u!61 &61903607363695586
 BoxCollider2D:
@@ -221,18 +222,18 @@ BoxCollider2D:
   m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: 0, y: -0.2769351}
+  m_Offset: {x: -0.029663086, y: -0.28540087}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
-    oldSize: {x: 2.0625, y: 2}
+    oldSize: {x: 2.2, y: 2.1333334}
     newSize: {x: 2.0625, y: 2}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 1.0370238, y: 1.4461298}
+  m_Size: {x: 1.1472168, y: 1.5985136}
   m_EdgeRadius: 0
 --- !u!95 &95247114437759456
 Animator:
@@ -266,7 +267,7 @@ MonoBehaviour:
   center: {fileID: 0}
   maxMoveSpeed: 20
   moveForce: 25
-  m_JumpForce: 800
+  m_JumpForce: 100
   m_CrouchSpeed: 0.36
   m_MovementSmoothing: 0.05
   m_AirControl: 1
@@ -324,6 +325,17 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &114338456485116062
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1086191628742150}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e30e179804fb68045abf7a1e7640e301, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &114425670041801900
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -377,7 +389,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 1
     m_LineSpacing: 1
-  m_Text: PlayerName
+  m_Text: 
 --- !u!114 &114442914693715206
 MonoBehaviour:
   m_ObjectHideFlags: 1

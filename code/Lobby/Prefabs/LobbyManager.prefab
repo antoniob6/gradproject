@@ -3203,7 +3203,25 @@ MonoBehaviour:
   m_PlayerSpawnMethod: 0
   m_OfflineScene: lobby scene
   m_OnlineScene: 
-  m_SpawnPrefabs: []
+  m_SpawnPrefabs:
+  - {fileID: 1749738681900300, guid: 958560bd83c297a4eb53aefb69c8df9b, type: 2}
+  - {fileID: 1548100377848816, guid: 5c007df781d02814ab79da2d9b0c6884, type: 2}
+  - {fileID: 1548100377848816, guid: 35503c37d42c40e49af087faaeed534f, type: 2}
+  - {fileID: 1548100377848816, guid: b6d390ebef09a08459ce5ac11b1845b7, type: 2}
+  - {fileID: 1014169564754462, guid: 61ad8f1eae3004d4fb6a97ec56c3ff38, type: 2}
+  - {fileID: 1957825263681396, guid: aa3ffcc32d2da9043a46970b7919bcf7, type: 2}
+  - {fileID: 1128318778325664, guid: 60cc687e63cc9a545bf04e5b33312901, type: 2}
+  - {fileID: 1086191628742150, guid: c453a7d0d55fe7d45b36117461c9b4df, type: 2}
+  - {fileID: 1000012909287652, guid: abb9f519b142e304d9c45b56afa768bc, type: 2}
+  - {fileID: 1128318778325664, guid: 7e34b84bbad30474e8612acf562c55b8, type: 2}
+  - {fileID: 1790119327815704, guid: 09fc95f266fc58b439958c0bc5bd9c05, type: 2}
+  - {fileID: 1298117452632012, guid: cce96b7ded92aee438807c13e8b87d06, type: 2}
+  - {fileID: 1254519771639014, guid: ddd06afb0f9bd47428f221ccfe000e92, type: 2}
+  - {fileID: 1113344616547960, guid: ca91f9a8283f57042830bdc02fa84302, type: 2}
+  - {fileID: 1000012909287652, guid: 90384af419bb3ca4f98f72359604ce8b, type: 2}
+  - {fileID: 1751713478320706, guid: 1ef6643e62c034a43902a902b475882b, type: 2}
+  - {fileID: 1422156884288674, guid: 5ffc5881e5af05d4ea6741370c00bff3, type: 2}
+  - {fileID: 1415556611663978, guid: 216ec6e5fef3e254d86b21071e614d66, type: 2}
   m_CustomConfig: 0
   m_MaxConnections: 4
   m_ConnectionConfig:
@@ -3260,12 +3278,12 @@ MonoBehaviour:
   isNetworkActive: 0
   matchMaker: {fileID: 0}
   m_ShowLobbyGUI: 0
-  m_MaxPlayers: 3
+  m_MaxPlayers: 10
   m_MaxPlayersPerConnection: 2
   m_MinPlayers: 1
   m_LobbyPlayerPrefab: {fileID: 11487034, guid: ad727d7e1462ecc4f83c898ecc501997,
     type: 2}
-  m_GamePlayerPrefab: {fileID: 1086191628742150, guid: 92e27307be5f64b4e8511048156690f9,
+  m_GamePlayerPrefab: {fileID: 1749738681900300, guid: 958560bd83c297a4eb53aefb69c8df9b,
     type: 2}
   m_LobbyScene: lobby scene
   m_PlayScene: platforms procedural

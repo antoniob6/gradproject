@@ -26,35 +26,33 @@ public class CollectQuest : Quest
         candiesToRemove = new List<GameObject>();
         finders = new List<GameObject>();
 
-        reward = Random.Range(50, 500);
+        //reward = Random.Range(50, 500);
         collectLimit = Random.Range(3, 20);
+        reward = collectLimit * 20;
 
-        questMessage = "everyone collect " + collectLimit + " pieces of red candy, and get " + reward + " points";
+        questMessage = "help in collecting " + collectLimit + " pieces of red candy";
         updateQuestMessage();
     }
 
     
     
-    private void init() {
-        
+    public override void init() {
+        base.init();
 
         for (int i = 0; i < collectLimit * 2; i++) {
             //spawnPosition = new Vector2(players[0].transform.position.x+Random.Range(-spawnrange, spawnrange), players[0].transform.position.y + 10);
-            spawnPosition = GM.MM.getRandomPosition();
-            spawnPosition += GravitySystem.instance.getUpDirection(spawnPosition);
+            spawnPosition = GM.MM.getRandomPositionAboveMap();
+
             Debug.Log("spawnning candy");
             candies.Add(GM.networkSpawn("candyPrefab", spawnPosition));
 
         }
     }
 
-    bool initd = false;
+
     public override void tick() {
         base.tick();
-        if (!initd) {
-            init();
-            initd = true;
-        }
+
         if (isComplete)
             return;
 

@@ -18,6 +18,8 @@ public class BackGroundManager : NetworkBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
+
+        /*
         if (isLocalPlayer&& backgroundImages.Length>=1) {
             timeLeft -= Time.deltaTime;
             if (timeLeft <= 0f) {
@@ -26,8 +28,21 @@ public class BackGroundManager : NetworkBehaviour {
                 CmdNextImage();
             }
         }
+        */
 		
 	}
+    public void nextImage() {
+        if (!isLocalPlayer || backgroundImages.Length < 1)
+            return;
+        imageIndex++;
+        if (imageIndex == backgroundImages.Length)
+            imageIndex = 0;
+
+        updateImage();
+
+    }
+
+
     [Command] public void CmdNextImage() {
         RpcNextImage();
     }

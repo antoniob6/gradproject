@@ -24,7 +24,7 @@ GameObject:
   - component: {fileID: 33698326853197352}
   - component: {fileID: 114797839937540978}
   - component: {fileID: 114700722358579206}
-  - component: {fileID: 68801235141672556}
+  - component: {fileID: 60741455822140970}
   m_Layer: 0
   m_Name: MapGenerator
   m_TagString: GravityCenter
@@ -87,8 +87,8 @@ MeshFilter:
   m_PrefabInternal: {fileID: 100100000}
   m_GameObject: {fileID: 1790119327815704}
   m_Mesh: {fileID: 0}
---- !u!68 &68801235141672556
-EdgeCollider2D:
+--- !u!60 &60741455822140970
+PolygonCollider2D:
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInternal: {fileID: 100100000}
@@ -100,10 +100,22 @@ EdgeCollider2D:
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}
-  m_EdgeRadius: 0
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
   m_Points:
-  - {x: -0.5, y: 0}
-  - {x: 0.5, y: 0}
+    m_Paths:
+    - - {x: 0, y: 1}
+      - {x: -0.95105654, y: 0.30901697}
+      - {x: -0.5877852, y: -0.80901706}
+      - {x: 0.58778536, y: -0.80901694}
+      - {x: 0.9510565, y: 0.30901712}
 --- !u!114 &114216134669453306
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -115,7 +127,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d8581a5fbb5d6184da0311c2ed55f80b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GM: {fileID: 0}
   RightEdge: {x: 0, y: 0, z: 0}
   thickness: 2
   length: 50
@@ -125,6 +136,8 @@ MonoBehaviour:
   vertsPerPlatform: 4
   Radius: 20
   isCircle: 0
+  mainMesh: {fileID: 0}
+  createBaseMapVerts: 0
 --- !u!114 &114700722358579206
 MonoBehaviour:
   m_ObjectHideFlags: 1

@@ -10,13 +10,18 @@ using UnityEngine;
 
 public class KillQuest : Quest {
 
+
+
     private int KillLimit = 0;
     public KillQuest(List<GameObject> _players, GameManager _GM) : base() {
         players = _players;
         GM = _GM;
-        reward = Random.Range(50, 500);
+        //reward = Random.Range(50, 500);
         KillLimit = Random.Range(1, 20);
-        questMessage = "kill " + KillLimit + " players, and get "+ reward+ " points";
+        reward = KillLimit * 50;
+        //killPlayers = Random.Range(0, 2) == 1 ? true : false;
+        questMessage = "kill " + KillLimit + " things";
+
         updateQuestMessage();
 
 
@@ -24,23 +29,19 @@ public class KillQuest : Quest {
 
 
     }
-    private void init() {
+    public override void init() {
+        base.init();
 
-        foreach (GameObject p in players) {
-            p.GetComponent<PlayerData>().resetRoundStats();
-        }
 
     }
 
-    bool initd = false;
+
     public override void tick() {
-        base.tick();
-        if (!initd) {
-            init();
-            initd = true;
-        }
+
         if (isComplete)
             return;
+        base.tick();
+
 
         if (winners.Count==players.Count) {
             questCompleted();
@@ -51,19 +52,11 @@ public class KillQuest : Quest {
         foreach (GameObject p in players) {
             if (!p)
                 continue;
-            if (p.GetComponent<PlayerData>().killedPlayerCount>=KillLimit) {
-                GameObject LHB = p.GetComponent<PlayerReceiveDamage>().lastHitby;
-  
-                if (LHB &&LHB.tag == "Player") {
-                    if (winners.IndexOf(LHB) == -1) {
-                        winners.Add(LHB);
-                        questCompleted();
-                        // GM.UpdatePlayerObjective(LHB, "good, now waiting for others");
-                    }
-                }
-
-
-
+            int killedCount = p.GetComponent<PlayerData>().roundKilledPlayerCount;
+            killedCount += p.GetComponent<PlayerData>().roundKilledEntityCount;
+            if (killedCount >= KillLimit) {
+                winners.Add(p);
+                p.GetComponent<PlayerData>().RpcUpdateText("you completed the quest, waiting for others to finish");
             }
 
         }

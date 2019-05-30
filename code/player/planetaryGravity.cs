@@ -33,16 +33,13 @@ public class planetaryGravity : MonoBehaviour {
 	}
     void FixedUpdate()
     {
-        if (GS == null) {
-            GS = FindObjectOfType<GravitySystem>();
-            return;
+
+        Vector3 gravityDir= GravitySystem.instance.getGravityDirection(transform.position).normalized;
+        float gravityForce = GravitySystem.instance.gravityForce;
+        if (m_Rigidbody2D) {
+            m_Rigidbody2D.AddForce(gravityDir* gravityForce);
         }
 
-        if (GS.gravityDirection == GravitySystem.GravityType.ToCenter)
-            m_Rigidbody2D.AddForce((center.transform.position - transform.position).normalized * GS.gravityForce);
-        else if (GS.gravityDirection == GravitySystem.GravityType.Down) {
-            m_Rigidbody2D.AddForce(Vector2.down* GS.gravityForce);
-        }
     }
 
 }

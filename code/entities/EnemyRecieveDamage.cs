@@ -49,8 +49,7 @@ public class EnemyRecieveDamage : NetworkBehaviour {
 
     }
     [Command] public void CmdTakeDamage(int amount) {
-        if (!isServer)
-            return;
+
         onDamage();
         currentHealth -= amount;
         if (currentHealth <= 0) {
@@ -60,28 +59,29 @@ public class EnemyRecieveDamage : NetworkBehaviour {
             }
         }
     }
+
+
     private void EntityDied() {
         dead = true;
         if (FCP)//if the entity follows the player
             FCP.dead = true;
     }
-    [Command]public void CmdTakeDamageWithGO(int amount,GameObject damagerGO) {
-        if (!isServer)
-            return;
+    public void takeDamageWithPD(int amount, PlayerData PDWhoHit) {
+        Debug.Log("enemy got damaged on the server");
         currentHealth -= amount;
         onDamage();
         if (currentHealth <= 0) {
-            EntityDied(damagerGO);
+            EntityDied(PDWhoHit);
             if (destroyWhenDead) {
                 Destroy(gameObject);
             }
         }
     }
 
-    private void EntityDied(GameObject damagerGO) {
-        PlayerData PD = damagerGO.GetComponent<PlayerData>();
-        if (PD) {
-            PD.playerKilledEntity();
+    private void EntityDied(PlayerData PDWhohit) {
+        //PlayerData PD = damagerGO.GetComponent<PlayerData>();
+        if (PDWhohit) {
+            PDWhohit.playerKilledEntity();
          //   Debug.Log("success in registering kill");
         } else
             Debug.Log("entity killed but couldn't identify killer");
@@ -92,14 +92,14 @@ public class EnemyRecieveDamage : NetworkBehaviour {
 
     private void onDamage() {
         if (onDamageEffect) {
-            GameObject GO = Instantiate(onDamageEffect, transform.position, transform.rotation);
+             Instantiate(onDamageEffect, transform.position, transform.rotation);
         }
     }
 
 
     private void OnDestroy() {
         if (onDeathEffect) {
-            GameObject GO = Instantiate(onDeathEffect, transform.position,transform.rotation);
+            Instantiate(onDeathEffect, transform.position,transform.rotation);
         }
     }
 }

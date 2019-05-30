@@ -8,71 +8,51 @@ using UnityEngine;
 public class RacingQuest:Quest{
 
 
-    private float threshold;
+    private float threshold = 30f;
 
-    private Vector3 spawnPosition;
-    private float spawnrange;
-    private GameObject foundable;
+    private Vector3 GoalLocation;
 
 
     public RacingQuest(List<GameObject> _players, GameManager _GM) {
         players = _players;
-
-        reward = Random.Range(50, 500);
-        questMessage ="reach the finish line"+ reward+" points";
         GM = _GM;
-        threshold = 2f;
-        if (_GM.gameRules != null)
-            spawnrange = _GM.gameRules.length;
-        else
-            spawnrange = 200;
+        reward = Random.Range(50, 500);
+        questMessage ="race to the right edge of the map";
+
 
         updateQuestMessage();
 
     }
-    private void init()
-    {
-
-        Random.InitState(System.DateTime.Now.Millisecond);
-        //spawnPosition = new Vector2(Random.Range(-spawnrange, spawnrange), GM.transform.position.y+10);
-
-        spawnPosition = GM.MM.getRandomPosition();
-        //Debug.Log(spawnPosition);
-        spawnPosition += GravitySystem.instance.getUpDirection(spawnPosition);
-        //Debug.Log(spawnPosition);
-        foundable =GM.networkSpawn("locationPrefab",spawnPosition);
-        //GM.setTimeLimit(30f);
+    public override void init() {
+        base.init();
+        //Debug.Log("finding the end position");
+        GoalLocation = GM.MM.getMapEndPosition();
     }
-    bool initd = false;
+
+
     public override void tick() {
-        if (!initd) {
-            init();
-            initd = true;
-        }
         if (isComplete)
             return;
+        //Debug.Log("ticking the base");
+        base.tick();
+        //Debug.Log("ticking the quest");
 
 
-        if (!foundable) {
-            if(!isComplete)
-               questCompleted();
-            isComplete = true;
-            
-            
-        }
 
         foreach (GameObject p in players)
         {
+            if (!p)
+                continue;
             BoxCollider2D PBC = p.GetComponent<PlayerConnectionObject>().
                 playerBoundingCollider;
             if (!PBC)
                 continue;
 
             GameObject GO = PBC.gameObject;
-            if (!p||!foundable)
-                continue;
-            if (Vector3.Distance(foundable.transform.position, GO.transform.position) < threshold)
+
+            if (Vector3.Distance(GoalLocation, GO.transform.position) < threshold)
             {
+                Debug.Log("some one reached the end");
                 //Debug.Log("player has found the foundable goal");
                 winners.Add(p);
                 questCompleted();
@@ -82,7 +62,6 @@ public class RacingQuest:Quest{
         }
     }
     public override void DestroyQuest() {
-        GM.networkDestroy(foundable);
     }
 
 

@@ -13,8 +13,11 @@ using UnityEngine.Networking;
 public class PlayerConnectionObject : NetworkBehaviour
 {
     public GameObject[] spawnableCharacters;
-    [HideInInspector]   public bool active;
     public PlayerCamera playerCamera;
+    public GameObject spawnBoxPrefab;
+
+    [HideInInspector]   public bool active=false;
+
     [HideInInspector]public BoxCollider2D playerBoundingCollider;
     [HideInInspector] public PlayableCharacter PC;
 
@@ -22,15 +25,22 @@ public class PlayerConnectionObject : NetworkBehaviour
     public bool facingRight = true;
 
     private int index = 0;
-    void Start() {
+    
+    private void Start() {
         if (!isLocalPlayer) {
             active = false;
+            //Debug.Log("not local player on client");
             return;
         }
         active = true;
-        //CmdSpawnMyUnit();
+        Invoke("delayedStart", 2f);
+
     }
 
+
+    public void delayedStart() {
+        CmdSpawnMyUnit();
+    }
 
 
     [SyncVar(hook = "OnPlayerNameChanged")]
@@ -64,13 +74,28 @@ public class PlayerConnectionObject : NetworkBehaviour
 
     [Command]
     public void CmdSpawnMyUnit() {
-        Vector3 spawnPoint = transform.position;
-        if (playerBoundingCollider != null) {
+        Vector3 up = GravitySystem.instance.getUpDirection(transform.position);
+        Vector3 spawnPoint = transform.position+up*2;//old character position
+
+        if (playerBoundingCollider != null) {//replace an existing character
             spawnPoint = playerBoundingCollider.gameObject.transform.position;
             NetworkServer.Destroy(playerBoundingCollider.gameObject);
+        } else {                    //or spawn in a random position
+            GameObject[] spawnObjects = GameObject.FindGameObjectsWithTag("Spawn");
+            if (spawnObjects.Length != 0) {
+                int randomSpawnIndex = Random.Range(0, spawnObjects.Length);
+                spawnPoint = spawnObjects[randomSpawnIndex].transform.position;
+            }
         }
 
+        MapManager MM = FindObjectOfType<MapManager>();
+        if(MM)
+            spawnPoint = MM.getRandomPositionAboveMap();
+        //spawn the charater int the position
         GameObject PlayerObject = Instantiate(spawnableCharacters[index],spawnPoint,Quaternion.identity);
+        if (!PlayerObject) {
+            Debug.Log("couldn't spawn player object: "+gameObject.name);
+        }
         NetworkServer.SpawnWithClientAuthority(PlayerObject, connectionToClient);
         RpcUpdateTarget(PlayerObject);
 
@@ -81,9 +106,11 @@ public class PlayerConnectionObject : NetworkBehaviour
 
 
     }
-    [ClientRpc]
-    void RpcUpdateTarget(GameObject newTarget) {
+    
+
+    [ClientRpc]void RpcUpdateTarget(GameObject newTarget) {
         if (isLocalPlayer) {
+          //  Debug.Log("updated camera on local player");
             playerCamera.TargetObject = newTarget;
 
         } else {//instances that are on the other clients
@@ -121,6 +148,35 @@ public class PlayerConnectionObject : NetworkBehaviour
         return isLocalPlayer;
     }
 
+
+    public void relayERDAttack(EnemyRecieveDamage ERD, int amount, PlayerData PDWhoHit) {
+        if (!ERD)
+            return;
+        //Debug.Log("local player trying to damage enemy");
+        
+        CmdRelayERDAttack(ERD.gameObject, amount, PDWhoHit.gameObject);
+    }
+    [Command] public void CmdRelayERDAttack(GameObject damageRecieverGO,int amount, GameObject damagerGO) {
+        EnemyRecieveDamage ERD = damageRecieverGO.GetComponent<EnemyRecieveDamage>();
+        PlayerData PDWhoHit = damagerGO.GetComponent<PlayerData>();
+        if (!ERD || !PDWhoHit) {
+            Debug.Log("cant find ERD/PDWhoHit from object on the server");
+        }
+
+        ERD.takeDamageWithPD(amount, PDWhoHit);
+
+    }
+
+
+    [Command]public void CmdSpawnBoxOnPosition(Vector3 spawnPosition) {
+        if (!spawnBoxPrefab) {
+            Debug.Log("spawn box prefab not assigned");
+            return;
+        }
+        GameObject go = Instantiate(spawnBoxPrefab, spawnPosition, Quaternion.identity);
+        NetworkServer.Spawn(go);
+
+    }
 
     
 }

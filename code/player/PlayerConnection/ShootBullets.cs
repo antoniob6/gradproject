@@ -14,44 +14,49 @@ public class ShootBullets : NetworkBehaviour {
 
     Vector3 bulletSpawnPoint=Vector3.zero;
     public void Shoot() {
-        CmdShoot();
-    }
-	[Command]
-	void CmdShoot() {
-        
 
-        Camera playerCamera = 
+        Camera playerCamera =
             GetComponent<PlayerConnectionObject>().getPlayerCamera();
 
 
         BoxCollider2D playerBoundingCollider =
              GetComponent<PlayerConnectionObject>().playerBoundingCollider;
-
+        if(!playerCamera || !playerBoundingCollider) {
+            Debug.Log("player character still not assigned");
+            return;
+        }
+            
 
         Vector3 mousePosition = Input.mousePosition;
         mousePosition = playerCamera.ScreenToWorldPoint(mousePosition);
-        Vector2 clickDiffrence= mousePosition- playerBoundingCollider.transform.position;
+        Vector2 clickDiffrence = mousePosition - playerBoundingCollider.transform.position;
         float distance = clickDiffrence.magnitude;
         //Debug.Log(distance);
         //if the click is too close to the player then cancel
         if (clickDiffrence.sqrMagnitude < playerBoundingCollider.bounds.extents.sqrMagnitude) {//clamp the distance
-            Debug.Log("the click is too close to the player");
+            //Debug.Log("the click is too close to the player");
             return;
         }
         if (distance > 10)
             distance = 10;
 
-        
+
         Vector3 spawnPoint = playerBoundingCollider.bounds.center;
         //shoot object from the apropriate side of the character
         spawnPoint.x += playerBoundingCollider.bounds.extents.x *
                                             Mathf.Sign(clickDiffrence.x);
 
+        Vector3 shootVelocity = clickDiffrence * bulletSpeed * distance / 10;
 
+        CmdShoot(spawnPoint,shootVelocity);
+    }
+	[Command]
+	void CmdShoot(Vector3 spawnPoint,Vector3 velocity) {
+        
 
        // bulletSpawnPoint = spawnPoint;
         GameObject bullet = Instantiate(bulletPrefab, spawnPoint, Quaternion.identity);
-        bullet.GetComponent<Rigidbody2D> ().velocity = clickDiffrence * bulletSpeed*distance/10;
+        bullet.GetComponent<Rigidbody2D> ().velocity = velocity;
 
         bullet.GetComponent<Bullet>().owner = gameObject.GetComponent<PlayerReceiveDamage>();
         bullet.GetComponent<Bullet>().ownerPD = gameObject.GetComponent<PlayerData>();
@@ -60,6 +65,7 @@ public class ShootBullets : NetworkBehaviour {
         NetworkServer.Spawn (bullet);
         Destroy (bullet, 9.0f);
     }
+
 
     private void OnDrawGizmos() {
         if(bulletSpawnPoint!=Vector3.zero)

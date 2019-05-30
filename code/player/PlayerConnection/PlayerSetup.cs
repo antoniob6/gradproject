@@ -14,6 +14,8 @@ public class PlayerSetup : NetworkBehaviour  {
     [SerializeField]
     Behaviour[] componentsToDisable;
 
+    [SerializeField]
+    GameObject[] ObjectsToDisable;
     // Use this for initialization
     void Start () {
 
@@ -21,7 +23,12 @@ public class PlayerSetup : NetworkBehaviour  {
         {
             for (int i = 0; i < componentsToDisable.Length; i++)
             {
-                componentsToDisable[i].enabled = false;
+                if(componentsToDisable[i])
+                 componentsToDisable[i].enabled = false;
+            }
+            for (int i = 0; i < ObjectsToDisable.Length; i++) {
+                if (ObjectsToDisable[i])
+                    ObjectsToDisable[i].SetActive( false);
             }
         }
 

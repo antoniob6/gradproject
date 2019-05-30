@@ -25,8 +25,10 @@ public class PlayerMovementWithGravity : NetworkBehaviour
         
         if (hasAuthority)
         {
+           
           
             horizontalMove = Input.GetAxisRaw("Horizontal") * runSpeed;
+
 
             animator.SetFloat("Speed", Mathf.Abs(horizontalMove));
 
@@ -63,6 +65,7 @@ public class PlayerMovementWithGravity : NetworkBehaviour
 	{
 		// Move our character
 		controller.Move(horizontalMove * Time.fixedDeltaTime, crouch, jump);
+        //Debug.Log("moving the player");
 		jump = false;
 	}
 }

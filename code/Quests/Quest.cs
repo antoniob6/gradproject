@@ -7,6 +7,7 @@ using UnityEngine;
 
 
 public class Quest{
+    public int questType;
     public bool isComplete=false;
     public int reward=100;
     public string questMessage;
@@ -20,12 +21,35 @@ public class Quest{
 
     public GameManager GM;
 
-    public Quest() {
+    public Quest() {//called once when quest is created
         setTimeLimit();
+
     }
     private int OldTime;
-    public virtual void tick() {
-        if (timeLeft <= 0f) {
+
+
+    public virtual void init() {//called once after players are ready
+        //Debug.Log("initializing quest on Quest BASE type");
+        foreach (GameObject p in players) {
+            if (p)
+                p.GetComponent<PlayerData>().resetRoundStats();
+        }
+    }
+    bool initd = false;
+    public virtual void tick() {//called every frame after players are ready
+        if(isComplete)
+            return;
+        if (linkedQuest)
+            return;
+
+        if (!initd) {//calls the init only one
+            init();
+            initd = true;
+        }
+
+
+
+        if (timeLeft <= 0f ) {//updates the quest time every second
             questCompleted();
         } else {
             timeLeft -= Time.deltaTime;
@@ -36,11 +60,14 @@ public class Quest{
         }
 
     }
+
     public virtual void DestroyQuest() { }
 
-    public void updateQuestMessage() {
+    public virtual void updateQuestMessage() {
+        if (linkedQuest)
+            return;
         string newQuestMessage = questMessage;
-        newQuestMessage += " (timeleft: " + (int)timeLeft + ")";
+        newQuestMessage += " (timeleft: " + (int)timeLeft + ", reward: "+reward+")";
         
         foreach( GameObject p in players) {
             PlayerData pd = p.GetComponent<PlayerData>();
@@ -59,9 +86,17 @@ public class Quest{
 
     }
     public virtual void questCompleted() {
-        if (!isComplete&&!linkedQuest)
-            GM.questCompleted(this);
+        //Debug.Log("quest has been completed");
+        if (isComplete)
+            return;
         isComplete = true;
+
+        if (linkedQuest)
+            return;
+
+
+         GM.questCompleted(this);
+
 
         foreach (GameObject p in players) {
             if (!p)
@@ -87,7 +122,7 @@ public class Quest{
         return questMessage;
     }
 
-    public void setTimeLimit() {//set high propability for medium time
+    public void setTimeLimit() {//set high propability for medium time ...
         float rand = Random.Range(0f, 1f);
         float selectedTime = 10f;
         if (rand < 0.2f) {

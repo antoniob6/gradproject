@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public class Boss : NetworkBehaviour {
 
 
-    public int damage;
+    public int damage=3;
     public float timeBtwDamage = 1.5f;
     private float timeBtwLeft = 1.5f;
     public Slider healthBar;
@@ -24,33 +24,35 @@ public class Boss : NetworkBehaviour {
     {
 
         if (RD.currentHealth <= 25) {
-            anim.SetTrigger("stageTwo");
+            if(anim)
+                anim.SetTrigger("stageTwo");
         }
 
         if (RD.currentHealth <= 0) {
-            anim.SetTrigger("death");
+            if(anim)
+                anim.SetTrigger("death");
         }
 
         // give the player some time to recover before taking more damage !
         if (timeBtwLeft > 0) {
             timeBtwLeft -= Time.deltaTime;
         }
-
-        healthBar.value = RD.currentHealth;
+        if(healthBar)
+            healthBar.value = RD.currentHealth;
     }
 
     private void OnTriggerEnter2D(Collider2D other)
     {
         if (!isServer)//only server version deals damage
             return;
-        Debug.Log("touched plyer"+timeBtwLeft);
+        //Debug.Log("touched plyer"+timeBtwLeft);
         if (other.CompareTag("PlayerObject") && isDead == false) {
             if (timeBtwLeft <= 0) {
                 PlayableCharacter PC = other.GetComponent<PlayableCharacter>();
                 if (PC) {//collided with player deal damage
                     timeBtwLeft = timeBtwDamage;
                     PC.RD.TakeDamage(damage);
-                    Debug.Log("boss touched player dealing damage");
+                    //Debug.Log("boss touched player dealing damage");
                 }
             }
         } 
