@@ -39,13 +39,14 @@ public class Sword : MonoBehaviour {
 
         if (Input.GetMouseButtonDown(0)) {//only local player does this
             //Debug.Log("slashing sword");
+            AudioManager.instance.play("slashing");
             sword.transform.Rotate(new Vector3(0, 0, -90));
             slashSword();
         } else if (Input.GetMouseButtonUp(0)) {//return sword
             Collider2D PBC = PCO.playerBoundingCollider;
             if(PBC)
                 sword.transform.localRotation = PBC.transform.rotation;
-        } else {
+        } else if(!Input.GetMouseButton(0)) {
             Collider2D PBC = PCO.playerBoundingCollider;
             if(PBC)
                 sword.transform.rotation = PBC.transform.rotation;

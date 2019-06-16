@@ -89,6 +89,10 @@ public class CharacterController2DwithGravity : NetworkBehaviour
         if (GravitySystem.instance.isReverseGravity) {
             movePercentage *= -1;
         }
+        if(m_Grounded  && Mathf.Abs(movePercentage) > 0.2) {
+            AudioManager.instance.play("playerRun");
+        }
+
 		// If crouching, check to see if the character can stand up
 		if (!crouch)
 		{
@@ -187,6 +191,15 @@ public class CharacterController2DwithGravity : NetworkBehaviour
 		// If the player should jump...
 		if (m_Grounded && jump)
 		{
+            // Add a vertical force to the player.
+            m_Grounded = false;
+            float gravitySqrt = Mathf.Sqrt(GravitySystem.instance.gravityForce);
+            float jumpHeight = Mathf.Sqrt(GravitySystem.instance.jumpHeight);
+            float jumpForce = m_JumpForce * jumpHeight * gravitySqrt;
+
+            m_Rigidbody2D.AddForce(transform.up.normalized * jumpForce);
+
+            AudioManager.instance.play("playerJump");
             if (PC) {
                 if (PC.PCO) {
                     PlayerData PD = PC.PCO.GetComponent<PlayerData>();
@@ -195,13 +208,7 @@ public class CharacterController2DwithGravity : NetworkBehaviour
                     }
                 }
             }
-			// Add a vertical force to the player.
-			m_Grounded = false;
-            float gravitySqrt = Mathf.Sqrt(GravitySystem.instance.gravityForce);
-            float jumpHeight = Mathf.Sqrt(GravitySystem.instance.jumpHeight);
-            float jumpForce = m_JumpForce * jumpHeight * gravitySqrt;
 
-            m_Rigidbody2D.AddForce(transform.up.normalized* jumpForce);
 		}
 	}
 

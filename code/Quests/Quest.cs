@@ -34,6 +34,8 @@ public class Quest{
             if (p)
                 p.GetComponent<PlayerData>().resetRoundStats();
         }
+
+        TextManager.instance.clearMessage();
     }
     bool initd = false;
     public virtual void tick() {//called every frame after players are ready

@@ -10,13 +10,16 @@ public class XPTextMessage : NetworkBehaviour {
     //public Text textReference;
     public float speed=3;
     public float lifeTime=2;
-
+    public Vector3 updirection;
 
     public void Start() {
+        updirection = GravitySystem.instance.getUpDirection(transform.position);
         StartCoroutine("fadeOut");
     }
+
+
     public void Update() {
-        transform.Translate(Vector3.up * speed * Time.deltaTime);
+        transform.Translate(updirection * speed * Time.deltaTime);
     }
     public IEnumerator fadeOut() {
         float startAlpha = textReference.color.a;

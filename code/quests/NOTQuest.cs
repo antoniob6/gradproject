@@ -7,7 +7,7 @@ using UnityEngine;
 
 public class NOTQuest:Quest{
 
-    private Quest quest1;
+    public Quest quest1;
 
 
     public NOTQuest(Quest quest) : base() {
@@ -41,7 +41,7 @@ public class NOTQuest:Quest{
         quest1.tick();
 
         if (quest1.isComplete  ) {
-            Debug.Log("not quest failed because first one completed");
+            //Debug.Log("not quest failed because first one completed");
 
 
             foreach(GameObject w in quest1.winners) {

@@ -10,6 +10,7 @@ using UnityEngine.Networking;
 using Random = UnityEngine.Random;
 
 public class MapGenerator: NetworkBehaviour {
+    public GameObject collisionBoxPrefab;
     public delegate void VoidFunctionDelegate();
     public delegate void MapGeneratorFunctionDelegate(MapGenerator MG);
     //public GameManager GM;
@@ -382,16 +383,16 @@ public class MapGenerator: NetworkBehaviour {
         //surfaceVertices[totalSurfaceVerts * resZ - 1] = new Vector3(surfaceVertices[totalSurfaceVerts - 1].x, surfaceVertices[totalSurfaceVerts - 1].y - thickness);
         //Debug.Log("last vert: " + surfaceVertices[totalSurfaceVerts * 2 - 1]);
 
-        for(int i = 0; i <surfaceVertices.Length;i++) {
-            if (surfaceVertices[i].sqrMagnitude <= 0.5) {
-                if(i<totalSurfaceVerts)
-                    Debug.Log("found zero 1nd row: " + i);
-                else
-                    Debug.Log("found zero 2nd row: " + i+", total: " + surfaceVertices.Length);
-            }
+        //for(int i = 0; i <surfaceVertices.Length;i++) {
+        //    if (surfaceVertices[i].sqrMagnitude <= 0.5) {
+        //        if(i<totalSurfaceVerts)
+        //            Debug.Log("found zero 1nd row: " + i);
+        //        else
+        //            Debug.Log("found zero 2nd row: " + i+", total: " + surfaceVertices.Length);
+        //    }
 
 
-        }
+        //}
         return surfaceVertices;
     }
  
@@ -554,10 +555,26 @@ ref x);
     private Vector3[] preventedCollision;
     private int pcindex = 0;
 
+
+    Vector3 translationCorrection = Vector3.zero;
     public Vector3[] createSurfacePlaneThatAvoids(Vector3[] surfaceToAvoid,int numOfVerts) {
         preventedCollision = new Vector3[100];
 
+        if(minDistance(transform.position,surfaceToAvoid) < jumpHeight){//if we start too low
+            
+            Debug.Log("map starting too low");
+            if (collisionBoxPrefab) {
+                GameObject GO = Instantiate(collisionBoxPrefab, transform.position, Quaternion.identity);
+                GO.transform.SetParent(this.transform);
+                GO.transform.localScale *= 2f;
+                GO = Instantiate(collisionBoxPrefab, transform.position+ Vector3.up * jumpHeight, Quaternion.identity);
+                GO.transform.SetParent(this.transform);
+                GO.transform.localScale *= 3f;
+            }
 
+            //transform.position += Vector3.up * jumpHeight;//doesn't work because position is calculated from outside
+            translationCorrection = Vector3.up * jumpHeight;
+        }
 
         Vector3[] vertices = new Vector3[numOfVerts];
         Random.InitState(seed);
@@ -576,13 +593,25 @@ ref x);
                         Vector3.down * (jumpHeight/vertsPerPlatform) + Vector3.right * unitWidth,vertsPerPlatform);
             //Vector3 predictedVert = predictedSection[predictedSection.Length-1]+Vector3.down*thickness;
             foreach (Vector3 predictedVert in predictedSection) {
-                if (minDistance(predictedVert, surfaceToAvoid) < jumpHeight * 1.3f) {
+                if ((minDistance(predictedVert+ Vector3.down * thickness, surfaceToAvoid) < jumpHeight)) {
                     preventedCollision[pcindex] = predictedVert;
                     pcindex++;
                     //Debug.Log("prevented collision: "+ predictedVert);
+                    if (collisionBoxPrefab) {
+                         Instantiate(collisionBoxPrefab, predictedVert +transform.position , Quaternion.identity).transform.SetParent(this.transform);
+                     
+                    }
                     platformDirection = 1;//curve up
                     break;
+                } else {
+                    if (collisionBoxPrefab) {
+                       GameObject GO= Instantiate(collisionBoxPrefab, predictedVert + transform.position, Quaternion.identity);
+                        GO.transform.SetParent(this.transform);
+                        GO.transform.localScale*= 0.5f;
+                    }
                 }
+
+
             }
 
             if (platformDirection == 0 || platformDirection == prvDirection && platformDirection!= 1) {
@@ -622,10 +651,16 @@ ref x);
             prvDirection = platformDirection;
 
         }
-       // vertices[vertices.Length-1] = new Vector3(vertices[0].x, vertices[0].y - length);
-
+        // vertices[vertices.Length-1] = new Vector3(vertices[0].x, vertices[0].y - length);
+        if(translationCorrection!=Vector3.zero)
+            correctTranslation(vertices, translationCorrection);
         RightEdge = vertices[totalSurfaceVerts - 1];
         return vertices;
+    }
+    void correctTranslation(Vector3[] vertices,Vector3 translationCorrection) {
+        for(int i=0;i<vertices.Length;i++) {
+            vertices[i] += translationCorrection;
+        }
     }
 
 

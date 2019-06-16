@@ -11,7 +11,7 @@ public class CompoundQuest:Quest{
 
     private Quest quest2;
     private Quest quest3;
-    public CompoundQuest(List<GameObject> _players, GameManager _GM) : base() {
+    public CompoundQuest (List<GameObject> _players, GameManager _GM) : base() {
         reward = Random.Range(50, 500);
 
         GM = _GM;
@@ -55,15 +55,25 @@ public class CompoundQuest:Quest{
         quest1.tick();
         quest2.tick();
         quest3.tick();
-        if (quest1.isComplete) {
+        if(quest1.isComplete&& quest2.isComplete) {
+            Debug.Log("both AND quests of compound quest completed");
+            reward = quest1.reward + quest2.reward;
+            winners = quest1.winners;
+            foreach (GameObject w in quest1.winners) {
+                if (quest2.winners.IndexOf(w) != -1) {//found someone who completed both quests
+                    winners.Add(w);
+                }
+            }
+
+            questCompleted();
+        } else if (quest1.isComplete) {
             if (questMessage != quest2.getMessage()) {
                 questMessage = quest2.getMessage()+" OR "+quest3.questMessage;
-                //  updateQuestMessage();
             }
         } else if (quest2.isComplete) {
             if (questMessage != quest1.getMessage()) {
                 questMessage = quest1.getMessage() + " OR " + quest3.questMessage;
-                //  updateQuestMessage();
+
             }
         }
 
@@ -79,19 +89,6 @@ public class CompoundQuest:Quest{
 
 
 
-        if (quest1.isComplete && quest2.isComplete) {
-            Debug.Log("both AND quests of compound quest completed");
-            reward = quest1.reward + quest2.reward;
-            winners = quest1.winners;
-            foreach (GameObject w in quest1.winners) {
-                if (quest2.winners.IndexOf(w) != -1) {//found someone who completed both quests
-                    winners.Add(w);
-                }
-            }
-            //winners.AddRange(quest2.winners);
-            questCompleted();
-
-        }
     }
 
     public override void updateQuestMessage() {//make sure the quest discreption is up to date

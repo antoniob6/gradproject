@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -30,6 +31,8 @@ public class TextManager : NetworkBehaviour {
         textObject.GetComponent<XPTextMessage>().updateTextOnLocalInstance(text);
     }
 
+
+
     public void createTextOnAll(Vector3 position, string text) {
         GameObject textObject = Instantiate(textPrefab.gameObject, position, Quaternion.identity);
         NetworkServer.Spawn(textObject);
@@ -51,6 +54,9 @@ public class TextManager : NetworkBehaviour {
         if (message)
             NetworkServer.Destroy(message);
     }
-
+    public void clearMessage() {
+        if (message)
+            NetworkServer.Destroy(message);
+    }
 
 }

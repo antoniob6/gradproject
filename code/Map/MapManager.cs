@@ -32,6 +32,8 @@ public class MapManager : NetworkBehaviour {
 
     MapGenerator generatedMapBase;
 
+    private int randomMapPrefabIndex = 0;
+
     bool MMinited = false;
     private void makeSureInit() {
         if (MMinited)
@@ -76,7 +78,7 @@ public class MapManager : NetworkBehaviour {
 
     MapGenerator generateMapBase(Vector3 position, Rules rules) {
         isBusyMakingMap = true;
-       GameObject GO= Instantiate(mapGeneratorPrefabs[Random.Range(0,mapGeneratorPrefabs.Length)].gameObject, position,Quaternion.identity);
+       GameObject GO= Instantiate(mapGeneratorPrefabs[randomMapPrefabIndex].gameObject, position,Quaternion.identity);
         GO.transform.parent = transform;
         MapGenerator MG = GO.GetComponent<MapGenerator>();
         MG.setRules(rules);
@@ -126,7 +128,7 @@ public class MapManager : NetworkBehaviour {
 
         //       Debug.Log(generatedMapBase.transform.position);
 
-        GameObject GO = Instantiate(mapGeneratorPrefabs[0].gameObject, spawnPosition, Quaternion.identity);
+        GameObject GO = Instantiate(mapGeneratorPrefabs[randomMapPrefabIndex].gameObject, spawnPosition, Quaternion.identity);
         GO.transform.parent = transform;
 
         MapGenerator MG = GO.GetComponent<MapGenerator>();
@@ -225,6 +227,8 @@ public class MapManager : NetworkBehaviour {
 
     public void createNewMap() {
         //Debug.Log("creating new map");
+
+        randomMapPrefabIndex = Random.Range(0, mapGeneratorPrefabs.Length);
         syncedTheMaps = false;
         makeSureInit();
         deleteOldMap();
@@ -238,6 +242,7 @@ public class MapManager : NetworkBehaviour {
 
     }
     public void createNewMapBaseOnly() {
+        randomMapPrefabIndex = Random.Range(0, mapGeneratorPrefabs.Length);
         syncedTheMaps = false;
         makeSureInit();
         deleteOldMap();

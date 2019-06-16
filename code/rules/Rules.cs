@@ -1,9 +1,11 @@
-﻿
-using System.Collections;
-using System.Collections.Generic;
+﻿/* this is the class that is responsible for the rules in the game
+ * not only it stores their value, it also generates new values for them.
+ * 
+ * note that the values are initialzed, this is only to prevent uninitialized values
+ * and the rules are only used after the generation proccess.
+ */
+
 using UnityEngine;
-
-
 
 
 public class Rules  {
@@ -16,26 +18,11 @@ public class Rules  {
     public float gravityForce=20;
     public float runningSpeed = 10;
     public bool isReverseGravity = false;
-
+    //-------------------------------constructor
     public Rules() {
         randomizeRules();
     }
-    public void randomizeRules() {
-
-        Radius = Random.Range(20f, 90f);
-        isCircle = Random.Range(0, 2)==1?true:false;
-        if(isCircle)
-            length = Random.Range(400f,1500f);
-        else
-            length = Random.Range(100f, 1000f);
-        seed = Random.Range(0, 3000);
-        gravityForce = Random.Range(10f, 100f);
-        jumpHeight = Random.Range(2f, 6f);
-        isReverseGravity = Random.Range(0, 2) == 1 ? true :false;
-        runningSpeed = Random.Range(15f, 50f);
-
-    }
-
+    //-------------------------------public functions
     public GravitySystem.GravityType resolveGravityType() {
         if (isCircle) {
             if (isReverseGravity)
@@ -47,6 +34,23 @@ public class Rules  {
             return GravitySystem.GravityType.Down;
         }
     }
+    public void randomizeRules() {
+
+        Radius = Random.Range(20f, 90f);
+        isCircle = Random.Range(0, 2)==1?false:true;
+        if(isCircle)
+            length = Random.Range(400f,1500f);
+        else
+            length = Random.Range(100f, 1000f);
+        seed = Random.Range(0, 3000);
+        gravityForce = Random.Range(10f, 100f);
+        jumpHeight = Random.Range(2f, 6f);
+        isReverseGravity = Random.Range(0, 2) == 1 ? false :false;
+        runningSpeed = Random.Range(15f, 50f);
+
+    }
+
+
 
 
 
