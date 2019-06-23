@@ -20,7 +20,7 @@ public class PlayerReceiveDamage : NetworkBehaviour {
 	[SyncVar]public int currentHealth;
 
     public float maxRecoveryTime=0.5f;
-
+    public float deathCoolDownTime = 5f;
     [SerializeField]
 	private bool destroyOnDeath;
 
@@ -54,13 +54,14 @@ public class PlayerReceiveDamage : NetworkBehaviour {
            // Debug.Log("damage prevented: " + (Time.time - lastDamageTime));
             return;
         }
-        lastDamageTime = Time.time;
+
         //Debug.Log("character triggered: "+ currentHealth);
         //hit by bullet
         if (collider.tag == "Bullet" ) {
             //Destroy(collider.gameObject);
             if (isServer && collider.gameObject.GetComponent<Bullet>().owner != gameObject.GetComponent<PlayerReceiveDamage>()) {
                 lastHitby = collider.gameObject.GetComponent<Bullet>().owner.gameObject;
+                NetworkServer.Destroy(collider.gameObject);
                 TakeDamage(1);
             }
 
@@ -93,16 +94,16 @@ public class PlayerReceiveDamage : NetworkBehaviour {
         }
 
     }
-    
 
-   public bool didWeCheckDeath = false;
+    private float lastCheckTime = 0f;
+    public bool didWeCheckDeath = false;
 
 
 	public void TakeDamage(int amount) {
         AudioManager.instance.play("playerGotDamaged");
         if (!isServer)//only server deals actual damage
             return;
-
+        lastDamageTime = Time.time;
         currentHealth -= amount;//reduce the amount of health
 
         if (recieveDamageEffect) {//add an effect that damage was received
@@ -118,8 +119,10 @@ public class PlayerReceiveDamage : NetworkBehaviour {
             Debug.Log("PD not assigned");
 
         if (currentHealth <= 0) {//player died
-            if(!didWeCheckDeath){// we only die once
+            if(!didWeCheckDeath || Time.time - lastCheckTime >= deathCoolDownTime){// we only die once
+                // second part of the || is a fail safe incase death wasn't registerd (e.g. packet loss)
                 didWeCheckDeath = true;
+                lastCheckTime = Time.time;
 
                 if (PD) {
                     PD.playerDied();

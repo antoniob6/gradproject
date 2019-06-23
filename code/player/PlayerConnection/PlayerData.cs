@@ -35,6 +35,7 @@ public class PlayerData : NetworkBehaviour
     [SyncVar] public int candyCount = 0;
     [SyncVar] public int jumpCount = 0;
     [Header("round player stats")]
+
     [SyncVar] public int roundKilledEntityCount = 0;
     [SyncVar] public int roundKilledPlayerCount = 0;
     [SyncVar] public int roundDeathCount = 0;
@@ -46,6 +47,10 @@ public class PlayerData : NetworkBehaviour
     private void Start() {
         PCO = GetComponent<PlayerConnectionObject>();
         PRD = GetComponent<PlayerReceiveDamage>();
+
+        if (isServer && playerName == "default") { 
+            playerName = "player " + new System.Random().Next(1,100) ;
+        }
     }
 
     #region healthUpdate
@@ -80,8 +85,11 @@ public class PlayerData : NetworkBehaviour
         score += s;
         scoreField.text = "score: " + score.ToString();
         //Debug.Log("score updated");
-        if (!PCO.playerBoundingCollider)
+        if (!PCO.playerBoundingCollider) {
+            Debug.Log("returning because there is no PBC");
             return;
+        }
+        //Debug.Log("displaying added score:"+s);
         if(s>0)
             TextManager.instance.createTextOnLocalInstance(PCO.playerBoundingCollider.gameObject.transform.position, "+" + (int)(s));
         else if(s<0)
@@ -125,9 +133,10 @@ public class PlayerData : NetworkBehaviour
     public void playerSkipBtn() {
         if (!isLocalPlayer)
             return;
-
+        if(PSB)
+            PSB.gameObject.SetActive(false);
         CmdPlayerSkipBtn(true);
-        PSB.gameObject.SetActive(false);
+
         //  Debug.Log("player ready and Btn disabled");
     }
     [Command]public void CmdPlayerSkipBtn(bool action) {
@@ -144,8 +153,8 @@ public class PlayerData : NetworkBehaviour
             return;
 
         CmdPlayerAgainBtn();
-        PAB.gameObject.SetActive(false);
-        FinalScoresImage.gameObject.SetActive(false);
+      //  PAB.gameObject.SetActive(false);
+       // FinalScoresImage.gameObject.SetActive(false);
         //  Debug.Log("player ready and Btn disabled");
     }
     [Command]
@@ -163,7 +172,7 @@ public class PlayerData : NetworkBehaviour
             if (PRB)
                 PRB.gameObject.SetActive(true);
             if (PSB)
-                PSB.gameObject.SetActive(false);
+                PSB.gameObject.SetActive(true);
         }
 
     }
@@ -306,8 +315,8 @@ public class PlayerData : NetworkBehaviour
 
     }
 
-    
-
-
-
+    [ClientRpc]public void RpcRoundSkipped() {
+        playerWantsToSkip = false;
+        PSB.gameObject.SetActive(true);
+    }
 }

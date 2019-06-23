@@ -25,9 +25,13 @@ public class EnemyRecieveDamage : NetworkBehaviour {
 	}
     
     void OnTriggerEnter2D(Collider2D collider) {
+
         if (collider.tag == "Bullet") {
             TakeDamage(1,collider);
-            Destroy(collider.gameObject);
+            //Destroy(collider.gameObject);
+            if (isServer) {
+                NetworkServer.Destroy(collider.gameObject);
+            }
         }
     }
     void TakeDamage(int amount, Collider2D collider) {
@@ -50,6 +54,19 @@ public class EnemyRecieveDamage : NetworkBehaviour {
     }
     [Command] public void CmdTakeDamage(int amount) {
 
+        onDamage();
+        currentHealth -= amount;
+        if (currentHealth <= 0) {
+            EntityDied();
+            if (destroyWhenDead) {
+                Destroy(gameObject);
+            }
+        }
+    }
+
+    public void takeDamageOnServer(int amount) {
+        if (!isServer)
+            return;
         onDamage();
         currentHealth -= amount;
         if (currentHealth <= 0) {
@@ -88,6 +105,8 @@ public class EnemyRecieveDamage : NetworkBehaviour {
         dead = true;
         if (FCP)//if the entity follows the player
             FCP.dead = true;
+
+        AudioManager.instance.play("enemyDeath");
     }
 
     private void onDamage() {
@@ -103,6 +122,7 @@ public class EnemyRecieveDamage : NetworkBehaviour {
         if (onDeathEffect) {
             Instantiate(onDeathEffect, transform.position,transform.rotation);
         }
+        //AudioManager.instance.play("enemyDeath");
         //AudioManager.instance.play("enemyDestroy");
     }
 }

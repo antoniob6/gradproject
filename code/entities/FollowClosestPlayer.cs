@@ -8,10 +8,10 @@ public class FollowClosestPlayer : NetworkBehaviour {
     public Animator animator;
     public Collider2D playerBoundingCollider;
     [SerializeField] private float speed = 3f;
-    private float m_JumpForce =100;
+    public float m_JumpForce =50;
     [Range(0, .3f)] [SerializeField] private float m_MovementSmoothing = .05f;
     [SerializeField]private float focusTimePeriod =3.0f;
-    [SerializeField] private float tickTimePeriod = 0.5f;
+    [SerializeField] private float tickTimePeriod = 0f;
     [HideInInspector] public bool dead = false;
 
 
@@ -63,8 +63,15 @@ public class FollowClosestPlayer : NetworkBehaviour {
 	void Update () {
         if (dead)
             return;
-        if(!target)
-            target= findClosestTarget();
+
+        focusTimeLeft -= Time.deltaTime;
+
+        if (focusTimeLeft <= 0f) {
+            focusTimeLeft = focusTimePeriod;
+            target = findClosestTarget();
+        }
+        if (!target)
+            return;
 
 
         tickTimeLeft -= Time.deltaTime;
@@ -76,12 +83,6 @@ public class FollowClosestPlayer : NetworkBehaviour {
         }
 
 
-        focusTimeLeft -= Time.deltaTime;
-
-        if (focusTimeLeft <= 0f) {
-            focusTimeLeft = focusTimePeriod;
-            target = findClosestTarget();
-        }
     }
 
     void tick() {

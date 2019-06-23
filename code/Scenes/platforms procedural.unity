@@ -263,6 +263,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 91c44bbde8c274e408d44e15cfe3a476, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  spawnables:
+  - name: dustPuff
+    obj: {fileID: 1113344616547960, guid: ca91f9a8283f57042830bdc02fa84302, type: 2}
 --- !u!4 &154841820
 Transform:
   m_ObjectHideFlags: 0
@@ -532,6 +535,28 @@ Prefab:
       propertyPath: m_RootOrder
       value: 11
       objectReference: {fileID: 0}
+    - target: {fileID: 1204721457695120, guid: 02c2a7a0b83e8514eaa43fa731760899, type: 2}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 114968563844462266, guid: 02c2a7a0b83e8514eaa43fa731760899,
+        type: 2}
+      propertyPath: XPTextPrefab
+      value: 
+      objectReference: {fileID: 114719598343944576, guid: 60cc687e63cc9a545bf04e5b33312901,
+        type: 2}
+    - target: {fileID: 114968563844462266, guid: 02c2a7a0b83e8514eaa43fa731760899,
+        type: 2}
+      propertyPath: XPRedTextPrefab
+      value: 
+      objectReference: {fileID: 114719598343944576, guid: 7e34b84bbad30474e8612acf562c55b8,
+        type: 2}
+    - target: {fileID: 114968563844462266, guid: 02c2a7a0b83e8514eaa43fa731760899,
+        type: 2}
+      propertyPath: GreenTopLeftMessagePrefab
+      value: 
+      objectReference: {fileID: 1957825263681396, guid: 46d30f7b353d3374ab72cf99603fb5ba,
+        type: 2}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 02c2a7a0b83e8514eaa43fa731760899, type: 2}
   m_IsPrefabAsset: 0
@@ -737,7 +762,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 1517214379959760, guid: 7dd4e47a9e779fd4ba69b2cabf8e6201,
     type: 2}
   m_PrefabInternal: {fileID: 1658068981}
---- !u!1001 &1306490431
+--- !u!1001 &1365282657
 Prefab:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -746,11 +771,11 @@ Prefab:
     m_Modifications:
     - target: {fileID: 4941470176915114, guid: 88ab8fdf8c8e07142adc51030957a427, type: 2}
       propertyPath: m_LocalPosition.x
-      value: 1.9825768
+      value: 1.9525769
       objectReference: {fileID: 0}
     - target: {fileID: 4941470176915114, guid: 88ab8fdf8c8e07142adc51030957a427, type: 2}
       propertyPath: m_LocalPosition.y
-      value: -0.49385795
+      value: 2.7661421
       objectReference: {fileID: 0}
     - target: {fileID: 4941470176915114, guid: 88ab8fdf8c8e07142adc51030957a427, type: 2}
       propertyPath: m_LocalPosition.z
@@ -758,15 +783,15 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 4941470176915114, guid: 88ab8fdf8c8e07142adc51030957a427, type: 2}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4941470176915114, guid: 88ab8fdf8c8e07142adc51030957a427, type: 2}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4941470176915114, guid: 88ab8fdf8c8e07142adc51030957a427, type: 2}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4941470176915114, guid: 88ab8fdf8c8e07142adc51030957a427, type: 2}
       propertyPath: m_LocalRotation.w
@@ -775,20 +800,6 @@ Prefab:
     - target: {fileID: 4941470176915114, guid: 88ab8fdf8c8e07142adc51030957a427, type: 2}
       propertyPath: m_RootOrder
       value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1838876651821836, guid: 88ab8fdf8c8e07142adc51030957a427, type: 2}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 114295161911403552, guid: 88ab8fdf8c8e07142adc51030957a427,
-        type: 2}
-      propertyPath: m_PlayerSpawnMethod
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 114295161911403552, guid: 88ab8fdf8c8e07142adc51030957a427,
-        type: 2}
-      propertyPath: m_CustomConfig
-      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 88ab8fdf8c8e07142adc51030957a427, type: 2}

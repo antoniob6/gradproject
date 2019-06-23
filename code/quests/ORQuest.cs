@@ -21,7 +21,7 @@ public class ORQuest : Quest
 
         QuestManager.QuestTypes[] usedTypes = new QuestManager.QuestTypes[1];
         usedTypes[0] = _GM.QM.getQuestType(quest1);
-        Debug.Log("quest1 type is: " + usedTypes[0]);
+        //Debug.Log("quest1 type is: " + usedTypes[0]);
 
 
         quest2 = _GM.QM.createRandomQuest(_players, _GM, false, usedTypes);
@@ -53,8 +53,8 @@ public class ORQuest : Quest
         quest2.tick();
 
 
-        if (quest1.isComplete || quest2.isComplete) {
-            Debug.Log("one OR quests completed");
+        if (quest1.isComplete && quest2.isComplete) {
+            //Debug.Log("one OR quests completed");
 
             winners = quest1.winners;
 
@@ -65,9 +65,31 @@ public class ORQuest : Quest
     }
 
     public override void updateQuestMessage() {//make sure the quest discreption is up to date
-        questMessage = quest1.questMessage + " OR " + quest2.questMessage;
+        questMessage = quest1.getMessage() + " OR " + quest2.getMessage();
 
         base.updateQuestMessage();
+    }
+
+
+    public override string getMessage(PlayerData PD = null) {
+       
+        if (quest1.didPlayerWin(PD)) {
+            return STRWAITWON;
+        }
+        if (quest2.didPlayerWin(PD)) {
+            return STRWAITWON;
+        }
+
+        return quest1.getMessage(PD) + " OR " + quest2.getMessage(PD);
+
+    }
+
+    public override bool didPlayerWin(PlayerData PD = null) {
+        if (PD == null)
+            return base.didPlayerWin();
+        if (quest1.didPlayerWin(PD) || quest2.didPlayerWin(PD))
+            return true;
+        return false;
     }
 
     public override void DestroyQuest() {
@@ -75,6 +97,22 @@ public class ORQuest : Quest
         quest2.DestroyQuest();
         // Debug.Log("destroying the object");
 
+    }
+    public override void RewardPlayers() {
+        foreach (GameObject p in players) {
+            PlayerData pd = p.GetComponent<PlayerData>();
+            if (pd != null) {
+                if (quest1.didPlayerWin(pd)) {
+                    pd.RpcAddScore(quest1.reward);
+                    continue;
+                }
+                if (quest2.didPlayerWin(pd)) {
+                    pd.RpcAddScore(quest2.reward);
+                    continue;
+                }
+
+            }
+        }
     }
 
 

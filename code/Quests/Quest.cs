@@ -21,6 +21,8 @@ public class Quest{
 
     public GameManager GM;
 
+    public const string STRWAITFAILED= "you failed, waiting for others";
+    public const string STRWAITWON = "you won, waiting for others";
     public Quest() {//called once when quest is created
         setTimeLimit();
 
@@ -68,12 +70,15 @@ public class Quest{
     public virtual void updateQuestMessage() {
         if (linkedQuest)
             return;
-        string newQuestMessage = questMessage;
-        newQuestMessage += " (timeleft: " + (int)timeLeft + ", reward: "+reward+")";
-        
-        foreach( GameObject p in players) {
+        //Debug.Log("updating from the main quest");
+
+
+        foreach ( GameObject p in players) {
             PlayerData pd = p.GetComponent<PlayerData>();
-            if(pd!=null)
+            string newQuestMessage = getMessage(pd);
+            newQuestMessage += " (timeleft: " + (int)timeLeft + ", reward: " + reward + ")";
+
+            if (pd!=null)
                 pd.RpcUpdateText(newQuestMessage);
         }
     }
@@ -87,6 +92,7 @@ public class Quest{
         }
 
     }
+
     public virtual void questCompleted() {
         //Debug.Log("quest has been completed");
         if (isComplete)
@@ -103,15 +109,17 @@ public class Quest{
         foreach (GameObject p in players) {
             if (!p)
                 return;
-            bool playerWon = false;
-            foreach (GameObject w in winners) {
-                if (w == p)
-                    playerWon = true;  
-            }
-            if(playerWon)
-                p.GetComponent<PlayerData>().RpcUpdateText("you have won this round");
+            //bool playerWon = false;
+            //foreach (GameObject w in winners) {
+            //    if (w == p)
+            //        playerWon = true;  
+            //}
+            PlayerData pd = p.GetComponent<PlayerData>();
+            if (pd != null && didPlayerWin(pd)) 
+                TextManager.instance.RpcDisplayGreenMessageToPlayer(p, "you won");
+            //p.GetComponent<PlayerData>().RpcUpdateText("you have won this round");
             else
-                p.GetComponent<PlayerData>().RpcUpdateText("you have lost this round");
+                TextManager.instance.RpcDisplayGreenMessageToPlayer(p, "you lost");
         }
 
         RewardPlayers();
@@ -120,8 +128,20 @@ public class Quest{
     public List<GameObject> getPlayers() {
         return players;
     }
-    public string getMessage() {
+    public virtual string getMessage(PlayerData PD=null) {
         return questMessage;
+    }
+    public virtual bool didPlayerWin(PlayerData PD = null) {
+        return false;
+    }
+    public virtual bool didPlayerLose(PlayerData PD = null) {
+        return false;
+    }
+
+    public bool didPlayerFinish(PlayerData PD = null) {
+        if (!didPlayerWin(PD) && !didPlayerLose(PD))
+            return false;
+        return true;
     }
 
     public void setTimeLimit() {//set high propability for medium time ...

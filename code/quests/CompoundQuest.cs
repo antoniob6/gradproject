@@ -42,7 +42,7 @@ public class CompoundQuest:Quest{
     }
 
     public override void init() {
-        Debug.Log("created and quest");
+        //Debug.Log("created and quest");
         quest1.init();
         quest2.init();
         quest3.init();
@@ -55,8 +55,40 @@ public class CompoundQuest:Quest{
         quest1.tick();
         quest2.tick();
         quest3.tick();
-        if(quest1.isComplete&& quest2.isComplete) {
-            Debug.Log("both AND quests of compound quest completed");
+        bool shouldEnd = false;
+        foreach (GameObject p in players) {//the purpose of this loop is to wait for all players to finish
+            PlayerData pd = p.GetComponent<PlayerData>();
+            if (pd != null) {//end quest if every one completed 
+                if(quest3.didPlayerWin(pd)){
+                    continue;
+                }
+                //here quest 3 can still be used
+                if(quest1.didPlayerWin(pd) && quest2.didPlayerWin(pd)) {
+                    continue;
+                }
+                //here means a player still didn't winning, checking for loss
+                if (quest1.didPlayerLose(pd)||quest2.didPlayerLose(pd)) {
+                    if(quest3.didPlayerLose(pd))
+                        continue;//lost all hope of winning
+                    //still have chance at quest 3
+                }
+                shouldEnd = false;
+             }
+        }
+        if (shouldEnd) {
+            questCompleted();
+        }
+
+        if (quest3.isComplete) {
+            //Debug.Log("OR quest of compound quest completed");
+            reward = quest3.reward;
+            winners = quest3.winners;
+            //winners.AddRange(quest2.winners);
+            questCompleted();
+            return;
+        }
+        if (quest1.isComplete&& quest2.isComplete) {
+            //Debug.Log("both AND quests of compound quest completed");
             reward = quest1.reward + quest2.reward;
             winners = quest1.winners;
             foreach (GameObject w in quest1.winners) {
@@ -66,29 +98,38 @@ public class CompoundQuest:Quest{
             }
 
             questCompleted();
+            return;
         } else if (quest1.isComplete) {
             if (questMessage != quest2.getMessage()) {
-                questMessage = quest2.getMessage()+" OR "+quest3.questMessage;
+                questMessage = quest2.getMessage()+" OR "+quest3.getMessage();
             }
         } else if (quest2.isComplete) {
             if (questMessage != quest1.getMessage()) {
-                questMessage = quest1.getMessage() + " OR " + quest3.questMessage;
+                questMessage = quest1.getMessage() + " OR " + quest3.getMessage();
 
             }
         }
 
-        if (quest3.isComplete) {
-            Debug.Log("OR quest of compound quest completed");
-            reward = quest3.reward ;
-            winners = quest3.winners;
 
-            //winners.AddRange(quest2.winners);
-            questCompleted();
 
+
+
+    }
+    public override void RewardPlayers() {
+        foreach (GameObject p in players) {
+            PlayerData pd = p.GetComponent<PlayerData>();
+            if (pd != null) {
+                if (quest3.didPlayerWin(pd)) {
+                    pd.RpcAddScore(quest3.reward);
+                    continue;
+                }
+                if(quest1.didPlayerWin(pd)&& quest2.didPlayerWin(pd)) {
+                    pd.RpcAddScore(quest1.reward + quest2.reward);
+                    continue;
+                }
+
+            }
         }
-
-
-
     }
 
     public override void updateQuestMessage() {//make sure the quest discreption is up to date
@@ -99,11 +140,70 @@ public class CompoundQuest:Quest{
         } else if (quest2.isComplete) {
                 questMessage = quest1.getMessage() + " OR " + quest3.getMessage();
         } else {//both quest still not completed
-            questMessage = "(" + quest1.questMessage + " AND " +
-            quest2.questMessage + ") OR " + quest3.questMessage;
+            questMessage = "(" + quest1.getMessage() + " AND " +
+            quest2.getMessage() + ")  OR " + quest3.getMessage();
         }
 
         base.updateQuestMessage();
+    }
+
+    public override string getMessage(PlayerData PD = null) {
+        if (quest3.didPlayerWin(PD))
+            return STRWAITWON;
+        if (quest3.didPlayerLose(PD)) {//it becomes like an AND quest
+
+            if (quest1.didPlayerLose(PD)|| quest2.didPlayerLose(PD)) //lost both quest
+                    return STRWAITFAILED;
+            if (quest1.didPlayerWin(PD) && quest2.didPlayerWin(PD))
+                return STRWAITWON;
+
+            if (quest1.didPlayerWin(PD))
+                return quest2.getMessage(PD);
+
+            if (quest2.didPlayerWin(PD)) {
+                return quest1.getMessage(PD);
+
+            }
+            if(quest1.didPlayerLose(PD) || quest2.didPlayerLose(PD)) {//failed both
+                return STRWAITFAILED;
+            }
+            return questMessage = quest1.getMessage(PD) + " AND " + quest2.getMessage(PD);
+
+        }
+        //reaches here means quest3 is still active for current player
+        if (quest1.didPlayerLose(PD) || quest2.didPlayerLose(PD)) //only third quest remains
+            return quest3.getMessage(PD);
+
+        //reached here means AND with OR quest  active 
+        if (quest1.didPlayerWin(PD))
+            return quest2.getMessage(PD) + " OR "+ quest3.getMessage(PD);
+
+        if (quest2.didPlayerWin(PD)) {
+            return quest1.getMessage(PD) + " OR " +quest3.getMessage(PD);
+
+        }
+        //all quests are active
+        return questMessage = "(" + quest1.getMessage(PD) + " AND " + quest2.getMessage(PD) +
+            ")  OR " +quest3.getMessage(PD);
+
+
+
+
+    }
+    public override bool didPlayerWin(PlayerData PD = null) {
+        if (PD == null)
+            return base.didPlayerLose();
+        if ((quest1.didPlayerWin(PD) && quest2.didPlayerWin(PD)) || quest3.didPlayerWin(PD))
+            return true;
+        return false;
+    }
+
+    public override bool didPlayerLose(PlayerData PD = null) {
+        if (PD == null)
+            return base.didPlayerLose();
+        if ((quest1.didPlayerLose(PD) || quest2.didPlayerLose(PD)) && quest3.didPlayerLose(PD))
+            return true;
+        return false;
     }
 
     public override void DestroyQuest() {

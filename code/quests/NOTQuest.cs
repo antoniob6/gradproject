@@ -19,7 +19,7 @@ public class NOTQuest:Quest{
         reward = quest1.reward;
         
 
-        questMessage = "DON'T "+quest1.questMessage;
+        questMessage = "DON'T "+quest1.getMessage();
 
         updateQuestMessage();
 
@@ -29,7 +29,7 @@ public class NOTQuest:Quest{
 
     public override void init(){
         base.init();
-        Debug.Log("created NOT quest");
+       //Debug.Log("created NOT quest");
         quest1.init();
 
     }
@@ -41,23 +41,45 @@ public class NOTQuest:Quest{
         quest1.tick();
 
         if (quest1.isComplete  ) {
-            //Debug.Log("not quest failed because first one completed");
-
-
-            foreach(GameObject w in quest1.winners) {
-                if (winners.IndexOf(w)>=0) {//found someone who didn't complete
-                    winners.Remove(w);
-                }
-            }
-            //winners.AddRange(quest2.winners);
             questCompleted();
 
         }
     }
+    public override void questCompleted() {
+        foreach (GameObject w in quest1.winners) {
+            if (winners.IndexOf(w) >= 0) {//found someone who didn't complete
+                winners.Remove(w);
+            }
+        }
+        base.questCompleted();
+    }
     public override void updateQuestMessage() {//make sure the quest discreption is up to date
                                                // call the base function after finishing to update them
-        questMessage = "DONT " + quest1.questMessage;
+        questMessage = "DONT " + quest1.getMessage();
         base.updateQuestMessage();
+    }
+
+    public override string getMessage(PlayerData PD = null) {
+        if (quest1.didPlayerWin(PD)) {
+            return STRWAITFAILED;
+        }
+        if (quest1.didPlayerLose(PD)) {
+            return STRWAITWON;
+        }
+        return "DON'T " + quest1.getMessage(PD);
+    }
+
+    public override bool didPlayerWin(PlayerData PD = null) {
+        if (PD == null)
+            return base.didPlayerWin();
+
+        return quest1.didPlayerLose(PD);
+    }
+    public override bool didPlayerLose(PlayerData PD = null) {
+        if (PD == null)
+            return base.didPlayerLose();
+
+        return quest1.didPlayerWin(PD);
     }
 
     public override void DestroyQuest() {

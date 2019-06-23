@@ -8,7 +8,7 @@ public class Sword : MonoBehaviour {
     public float knockBackForce=200;
     public GameObject sword;
     public GameObject slashingEffect;
-
+    public float coolDownTime = 0.3f;
     private bool active;
 
     private GameObject selecteObject;
@@ -32,13 +32,14 @@ public class Sword : MonoBehaviour {
         //Debug.Log("sword chosen");
     }
 
-
+    private float lastTpTime = 0f;
     private void Update() {
         if (!active)//only run on local player
             return;
 
-        if (Input.GetMouseButtonDown(0)) {//only local player does this
+        if (Input.GetMouseButtonDown(0)&& Time.time - lastTpTime >= coolDownTime) {//only local player does this
             //Debug.Log("slashing sword");
+            lastTpTime = Time.time;
             AudioManager.instance.play("slashing");
             sword.transform.Rotate(new Vector3(0, 0, -90));
             slashSword();
@@ -46,7 +47,7 @@ public class Sword : MonoBehaviour {
             Collider2D PBC = PCO.playerBoundingCollider;
             if(PBC)
                 sword.transform.localRotation = PBC.transform.rotation;
-        } else if(!Input.GetMouseButton(0)) {
+        } else if(!Input.GetMouseButton(0)) {//follow player when mouse isn't pressed
             Collider2D PBC = PCO.playerBoundingCollider;
             if(PBC)
                 sword.transform.rotation = PBC.transform.rotation;
@@ -60,14 +61,44 @@ public class Sword : MonoBehaviour {
         Collider2D PBC = PCO.playerBoundingCollider;
         sword.transform.position = PBC.transform.position;
         sword.transform.position += PBC.transform.right* PBC.bounds.extents.x / 2;
-        if (PCO.facingRight && !wasFacingRight ) {
+
+
+        if (!wasFacingRight&& isMouseToTheRight()) {
             transform.localScale = Vector3.one;
             wasFacingRight = true;
-        } else if(!PCO.facingRight && wasFacingRight) {
+        } else if( wasFacingRight&& !isMouseToTheRight()) {
             transform.localScale = new Vector3(-1f,1f,1f);
             wasFacingRight = false;
         }
 
+    }
+    Camera playerCamera;
+    BoxCollider2D playerBoundingCollider;
+
+
+public bool isMouseToTheRight() {
+        if(!playerCamera)
+            playerCamera = PCO.getPlayerCamera();
+        if(!playerBoundingCollider)
+            playerBoundingCollider=PCO.playerBoundingCollider;
+
+        if (!playerCamera || !playerBoundingCollider) {
+            Debug.Log("player character still not assigned");
+            return true ;
+        }
+
+        Vector3 mousePosition = Input.mousePosition;
+        mousePosition = playerCamera.ScreenToWorldPoint(mousePosition);
+        Vector2 clickDiffrence = mousePosition - playerBoundingCollider.transform.position;
+        Transform player = playerBoundingCollider.transform;
+        Vector3 slashDir = player.right;
+        Vector2 A = player.up;
+        Vector2 B = player.position - mousePosition;
+        bool isleft = -A.x * B.y + A.y * B.x > 0;
+        if (isleft)
+            return false;
+
+        return true;
     }
     Vector3 hitCenterGizmoVector=Vector3.zero;
 
@@ -75,7 +106,7 @@ public class Sword : MonoBehaviour {
     private void slashSword() {//executed on local instance
         Transform player = PCO.playerBoundingCollider.transform;
         Vector3 slashDir = player.right;
-        if (!PCO.facingRight)
+        if (!isMouseToTheRight())
             slashDir = player.right * -1f;
 
         Vector3 slashPoint = player.position;
