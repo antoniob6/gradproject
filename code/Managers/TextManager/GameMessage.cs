@@ -38,6 +38,13 @@ public class GameMessage : NetworkBehaviour {
         textUI.text= text;
 
     }
+
+    public void updateTextLocal(string text) {
+        sText = text;
+
+        textUI.text = text;
+
+    }
     public void onClick() {
       //  Debug.Log("clicked on message");
        // Destroy(gameObject);

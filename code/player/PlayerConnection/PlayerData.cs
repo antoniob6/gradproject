@@ -153,7 +153,7 @@ public class PlayerData : NetworkBehaviour
             return;
 
         CmdPlayerAgainBtn();
-      //  PAB.gameObject.SetActive(false);
+        PAB.gameObject.SetActive(false);
        // FinalScoresImage.gameObject.SetActive(false);
         //  Debug.Log("player ready and Btn disabled");
     }
@@ -204,6 +204,11 @@ public class PlayerData : NetworkBehaviour
             if (PSB)
                 PSB.gameObject.SetActive(false);
         }
+
+        objectiveText = "game has ended, press vote to play again.";
+        objectiveField.text = objectiveText;
+
+
 
     }
 

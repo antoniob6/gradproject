@@ -41,6 +41,8 @@ public class QuestManager : MonoBehaviour {
 
 
 
+
+
     //note that NOT quest is allways allowed
     //recursvie means that it allows AND quest and OR quest otherwize it'll repeat recursvely
     int playerCount;
@@ -51,6 +53,8 @@ public class QuestManager : MonoBehaviour {
 
         playerCount = players.Count;
 
+        
+        //return new RacingQuest(players, GM);
         //return new SurviveQuest(players, GM);
         //return new GuardQuest(players, GM);
         //return new FollowQuest(players, GM);
@@ -83,7 +87,7 @@ public class QuestManager : MonoBehaviour {
         
         if (allowAND && choseANDORQuest) {//the quest should be AND/OR/Compound
             //Debug.Log("creating random AND/OR/Compound quest");
-            int randType = Random.Range(0, 3);
+            int randType = new sysRand().Next(0,3);
 
             if (randType == 0) {
                 return new ANDQuest(players, GM);

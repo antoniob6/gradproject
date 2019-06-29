@@ -98,12 +98,12 @@ public class ShootBullets : NetworkBehaviour {
         //  bullet.transform.parent = transform;
         spawnedBullets.Add(bullet);
         spawnedBulletsTime.Add(Time.time);
-        NetworkServer.Spawn (bullet);
+
 
         //Destroy(bullet, 9.0f);
         //RpcDeleteAfter(bullet, 9f);
         //RpcShoot2( spawnPoint, velocity);
-
+        NetworkServer.Spawn(bullet);
 
     }
 

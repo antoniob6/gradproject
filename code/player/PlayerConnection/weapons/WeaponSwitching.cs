@@ -13,6 +13,8 @@ public class WeaponSwitching : MonoBehaviour
 
     }
 
+    public int weaponBeforeDeath = 0;
+    bool respawned = true;
     void Update() {
         int previousSelectedWeapon = selectedWeapon;
         if (parentPCO.isLocal()) {//local player can change weapon
@@ -39,11 +41,23 @@ public class WeaponSwitching : MonoBehaviour
 
             }
 
+        if (!parentPCO.isAlive) {
+            if (selectedWeapon != -1) {
+                weaponBeforeDeath = selectedWeapon;
 
-        if (previousSelectedWeapon != selectedWeapon) {
+            }
+            respawned = false;
+            selectedWeapon = -1;
+        } else {
+            if (!respawned) {
+                selectedWeapon = weaponBeforeDeath;
+                respawned = true;
+            }
+        }
+        if (previousSelectedWeapon != selectedWeapon ) {
             selectWeapon();
             parentPCO.changeWeapon(selectedWeapon);
-            Debug.Log("changing weapon on script");
+            //Debug.Log("changing weapon on script");
         }
 
     }

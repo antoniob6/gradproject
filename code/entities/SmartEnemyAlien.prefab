@@ -78,7 +78,7 @@ BoxCollider2D:
   m_GameObject: {fileID: 1361802489716248}
   m_Enabled: 1
   m_Density: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: 06f4443561b039b4fb9a744b12b3b9a2, type: 2}
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
@@ -108,10 +108,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   animator: {fileID: 0}
   playerBoundingCollider: {fileID: 61410383150386854}
-  speed: 10
+  speed: 20
   m_JumpForce: 50
   m_MovementSmoothing: 0.05
-  focusTimePeriod: 5
+  focusTimePeriod: 3
   tickTimePeriod: 0
   dead: 0
   target: {fileID: 0}

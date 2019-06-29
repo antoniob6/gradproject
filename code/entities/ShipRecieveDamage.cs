@@ -20,7 +20,10 @@ public class ShipRecieveDamage : NetworkBehaviour
     }
 
     // Update is called once per frame
+
     void Update() {
+
+        updateHeathBar();
 
     }
 
@@ -41,7 +44,7 @@ public class ShipRecieveDamage : NetworkBehaviour
 
     }
     void TakeDamage(int amount) {
-        updateHeathBar();
+      
         if (!isServer)
             return;
         currentHealth -= amount;

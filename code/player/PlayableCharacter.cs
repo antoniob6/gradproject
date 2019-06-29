@@ -88,6 +88,10 @@ public class PlayableCharacter : NetworkBehaviour {
     }
     
     [ClientRpc]public void RpcPlayerDied(Vector3 newSpawnPos) {
+        if (PCO.isLocal()) {
+            PCO.isAlive = false;
+            //Debug.Log("local player dead");
+        }
         //respawn the player
         //transform.position = newSpawnPos;
         //RD.currentHealth = RD.maxHealth;
@@ -135,6 +139,11 @@ public class PlayableCharacter : NetworkBehaviour {
         transform.position = newSpawnPos;
         RD.currentHealth =RD.maxHealth;
         RD.didWeCheckDeath = false;
+        if (PCO.isLocal()) {
+            PCO.isAlive = true;
+            //Debug.Log("local player alive");
+
+        }
 
     }
 

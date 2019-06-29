@@ -17,6 +17,8 @@ using UnityEngine.Networking;
 
 public class GameManager : NetworkBehaviour {
     // public MapGenerator mapGenerator;
+    float ObjSpawnTime = 0.2f;
+
     public MapManager MM;
     public QuestManager QM;
 
@@ -178,7 +180,7 @@ public class GameManager : NetworkBehaviour {
 
 
             if (!roundMessageDisplayed) {
-                setDifficulty();
+
                 TextManager.instance.displayMessageToAll("starting now");
                 roundMessageDisplayed = true;
             }
@@ -276,7 +278,7 @@ public class GameManager : NetworkBehaviour {
         currentRound++;
         //changeMap();
         activeQuests.Clear();
-        
+        roundMessageDisplayed = false;
     }
 
     public void ForceQuestsToComplete() {
@@ -325,8 +327,8 @@ public class GameManager : NetworkBehaviour {
             activeQuests.Add(l);
             TextManager.instance.displayMessageToAll("Waiting for players to get ready", 15);
             CancelInvoke("completeQuests");
+            setDifficulty();
 
-            
         }
     }
     public void GameOverSeqence() {
@@ -350,23 +352,32 @@ public class GameManager : NetworkBehaviour {
             pdata.RpcGameHasEnded();
 
         }
-        TextManager.instance.displayMessageToAll(scores, 20);
+        //TextManager.instance.displayMessageToAll(scores, 20);
     }
 
     public List<GameObject> enemies= new List<GameObject>();
+
     public void setDifficulty() {
         clearDifficullty();
 
         int numOfEnemies = currentRound * 5+ (int)currentRules.length / 100;
         //Debug.Log("spawnning " + numOfEnemies + " enemies");
-        for(int i = 0; i < numOfEnemies; i++) {
+        StartCoroutine(spawnEnemiesCo(numOfEnemies));
+
+    }
+
+    IEnumerator spawnEnemiesCo(int numOfEnemies) {
+        for (int i = 0; i < numOfEnemies; i++) {
             Vector3 randomLocation = MM.getRandomPositionAboveMap();
 
             GameObject GO = networkSpawn("enemyPrefab", randomLocation);
             enemies.Add(GO);
+        
+        yield return new WaitForSeconds(ObjSpawnTime);
         }
 
     }
+
     public void clearDifficullty() {
         foreach(GameObject e in enemies) {
             if (!e)

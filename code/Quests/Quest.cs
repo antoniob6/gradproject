@@ -132,10 +132,20 @@ public class Quest{
         return questMessage;
     }
     public virtual bool didPlayerWin(PlayerData PD = null) {
+        if (!isComplete)
+            return false;
+        if (winners.Contains(PD.gameObject)) {
+            return true;
+        }
         return false;
     }
     public virtual bool didPlayerLose(PlayerData PD = null) {
-        return false;
+        if (!isComplete)
+            return false;
+        if (winners.Contains(PD.gameObject)) {
+            return false;
+        }
+        return true;
     }
 
     public bool didPlayerFinish(PlayerData PD = null) {

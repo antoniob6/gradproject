@@ -24,7 +24,7 @@ public class PlayerConnectionObject : NetworkBehaviour
 
     public bool facingRight = true;
     [SyncVar]public int selectedWeapon = 0;
-    private int index = 0;
+    private int selectedCharacter = 0;
     
     private void Start() {
         if (!isLocalPlayer) {
@@ -37,11 +37,11 @@ public class PlayerConnectionObject : NetworkBehaviour
         Invoke("delayedStart", 2f);
 
     }
-
+    public bool isAlive=true;
     bool shouldStart = false;
     public void delayedStart() {
         spawnTime = Time.time;
-        CmdSpawnMyUnit();
+        CmdSpawnMyUnit(selectedCharacter);
         shouldStart = true;
     }
 
@@ -60,7 +60,7 @@ public class PlayerConnectionObject : NetworkBehaviour
         if (shouldStart&& playerBoundingCollider==null) {//try spawning automaticly if failed after 5 seconds
             if(Time.time-spawnTime > 5f) {
                 spawnTime = Time.time;
-                CmdSpawnMyUnit();
+                CmdSpawnMyUnit(selectedCharacter);
 
             }
         }
@@ -68,14 +68,14 @@ public class PlayerConnectionObject : NetworkBehaviour
 
         if (Input.GetKeyDown(KeyCode.C)) {
 
-            if (index >= spawnableCharacters.Length-1) {
-                index = 0;
+            if (selectedCharacter >= spawnableCharacters.Length-1) {
+                selectedCharacter = 0;
             } else {
-                index++;
+                selectedCharacter++;
             }
-            Debug.Log("changing character "+ index);
+            //Debug.Log("changing character "+ selectedCharacter);
             spawnTime = Time.time;
-            CmdSpawnMyUnit();
+            CmdSpawnMyUnit(selectedCharacter);
         }
 
     }
@@ -87,8 +87,8 @@ public class PlayerConnectionObject : NetworkBehaviour
 
 
     [Command]
-    public void CmdSpawnMyUnit() {
-        
+    public void CmdSpawnMyUnit(int newSelectedCharater) {
+        selectedCharacter = newSelectedCharater;
         Vector3 up = GravitySystem.instance.getUpDirection(transform.position);
         Vector3 spawnPoint = transform.position+up*2;//old character position
 
@@ -107,7 +107,7 @@ public class PlayerConnectionObject : NetworkBehaviour
         if(MM)
             spawnPoint = MM.getRandomPositionAboveMap();
         //spawn the charater int the position
-        GameObject PlayerObject = Instantiate(spawnableCharacters[index],spawnPoint,Quaternion.identity);
+        GameObject PlayerObject = Instantiate(spawnableCharacters[selectedCharacter],spawnPoint,Quaternion.identity);
         if (!PlayerObject) {
             Debug.Log("couldn't spawn player object: "+gameObject.name);
         }
@@ -201,7 +201,7 @@ public class PlayerConnectionObject : NetworkBehaviour
     }
     [Command]public void CmdChangeWeapon(int n) {
         selectedWeapon = n;
-        Debug.Log("changing weapon on server");
+        //Debug.Log("changing weapon on server");
         RpcChangeWeapon( n);
     }
     [ClientRpc]
@@ -209,7 +209,7 @@ public class PlayerConnectionObject : NetworkBehaviour
         if (isLocalPlayer)//script already works on local player
             return;
 
-        Debug.Log("changing weapon on clients");
+        //Debug.Log("changing weapon on clients");
         WeaponSwitching WS= GetComponentInChildren<WeaponSwitching>();
         if (!WS) {
             Debug.Log("cant find WS script");

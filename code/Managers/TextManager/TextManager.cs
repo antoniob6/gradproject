@@ -49,18 +49,20 @@ public class TextManager : NetworkBehaviour {
     }
 
     public void displayMessageToAll(string m, float time = 3) {
+        if (!isServer)
+            return;
         StartCoroutine(displayMessage(m, time));
     }
-    private GameObject spawnedMessageObj;
+    private GameObject spawnedMessageObjOnServer;
     IEnumerator displayMessage(string m, float time) {
-        if (spawnedMessageObj)
-            NetworkServer.Destroy(spawnedMessageObj);
-        spawnedMessageObj = Instantiate(messageToAllPrefab, Vector3.zero, Quaternion.identity) as GameObject;
-        NetworkServer.Spawn(spawnedMessageObj);
-        spawnedMessageObj.GetComponent<GameMessage>().RpcUpdateText(m);
+        if (spawnedMessageObjOnServer)
+            NetworkServer.Destroy(spawnedMessageObjOnServer);
+        spawnedMessageObjOnServer = Instantiate(messageToAllPrefab, Vector3.zero, Quaternion.identity) as GameObject;
+        NetworkServer.Spawn(spawnedMessageObjOnServer);
+        spawnedMessageObjOnServer.GetComponent<GameMessage>().RpcUpdateText(m);
         yield return new WaitForSeconds(time);
-        if (spawnedMessageObj)
-            NetworkServer.Destroy(spawnedMessageObj);
+        if (spawnedMessageObjOnServer)
+            NetworkServer.Destroy(spawnedMessageObjOnServer);
     }
 
 
@@ -83,17 +85,17 @@ public class TextManager : NetworkBehaviour {
     private GameObject spawnedGreenMessage;
     IEnumerator displayGreenMessage(string m, float time) {
         if (spawnedGreenMessage)
-            NetworkServer.Destroy(spawnedGreenMessage);
+            Destroy(spawnedGreenMessage);
         spawnedGreenMessage = Instantiate(GreenTopLeftMessagePrefab, Vector3.zero, Quaternion.identity) as GameObject;
-        spawnedGreenMessage.GetComponent<GameMessage>().RpcUpdateText(m);
+        spawnedGreenMessage.GetComponent<GameMessage>().updateTextLocal(m);
         yield return new WaitForSeconds(time);
         if (spawnedGreenMessage)
-            NetworkServer.Destroy(spawnedGreenMessage);
+            Destroy(spawnedGreenMessage);
     }
 
     public void clearMessage() {
-        if (spawnedMessageObj)
-            NetworkServer.Destroy(spawnedMessageObj);
+        if (spawnedMessageObjOnServer)
+            NetworkServer.Destroy(spawnedMessageObjOnServer);
     }
 
 }

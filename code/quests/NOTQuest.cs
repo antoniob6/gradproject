@@ -73,11 +73,13 @@ public class NOTQuest:Quest{
         if (PD == null)
             return base.didPlayerWin();
 
+
         return quest1.didPlayerLose(PD);
     }
     public override bool didPlayerLose(PlayerData PD = null) {
         if (PD == null)
             return base.didPlayerLose();
+
 
         return quest1.didPlayerWin(PD);
     }

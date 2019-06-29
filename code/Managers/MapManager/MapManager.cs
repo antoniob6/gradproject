@@ -401,14 +401,25 @@ public class MapManager : NetworkBehaviour {
         if (!generatedMapBase)
             return Vector3.zero;
 
-        Vector3[] surfaceVerts= generatedMapBase.getSurfaceVertsInGlobalSpace();
+        Vector3[] surfaceVerts= generatedMapBase.getSpreadSurfaceVertsInGlobalSpace();
 
         if (surfaceVerts.Length <= 0) {
             Debug.Log("couldn't get map end");
             return Vector3.zero;
         }
 
-        return surfaceVerts[surfaceVerts.Length-1];
+        if (GM.currentRules.isCircle) {
+            float radius = generatedMapBase.length / Mathf.PI / 2;
+            Vector3 begin = surfaceVerts[0];
+            Vector3 end = surfaceVerts[surfaceVerts.Length - 1];
+
+            float height = radius + (end.y - begin.y);
+            Vector3 mapEnd = Vector3.up * height;
+            return mapEnd;
+
+        }
+
+            return surfaceVerts[surfaceVerts.Length-1];
 
 
     }

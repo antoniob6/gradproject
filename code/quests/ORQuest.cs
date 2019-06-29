@@ -79,6 +79,12 @@ public class ORQuest : Quest
         if (quest2.didPlayerWin(PD)) {
             return STRWAITWON;
         }
+        if (quest1.didPlayerLose(PD)) {
+            return quest2.getMessage(PD);
+        }
+        if (quest2.didPlayerLose(PD)) {
+            return quest1.getMessage(PD);
+        }
 
         return quest1.getMessage(PD) + " OR " + quest2.getMessage(PD);
 
@@ -87,6 +93,9 @@ public class ORQuest : Quest
     public override bool didPlayerWin(PlayerData PD = null) {
         if (PD == null)
             return base.didPlayerWin();
+
+
+
         if (quest1.didPlayerWin(PD) || quest2.didPlayerWin(PD))
             return true;
         return false;
