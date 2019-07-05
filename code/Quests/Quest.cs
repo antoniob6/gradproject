@@ -83,11 +83,19 @@ public class Quest{
         }
     }
     public virtual void RewardPlayers() {
-        foreach (GameObject p in winners) {
-            PlayerData pd = p.GetComponent<PlayerData>();
-            if (pd != null) {
-                pd.RpcAddScore(reward);
-                
+        //foreach (GameObject p in winners) {
+        //    PlayerData pd = p.GetComponent<PlayerData>();
+        //    if (pd != null) {
+        //        pd.RpcAddScore(reward);
+
+        //    }
+        //}
+        foreach (GameObject p in players) {
+           PlayerData pd = p.GetComponent<PlayerData>();
+          if (pd != null) {
+               if(didPlayerWin(pd))
+                    pd.RpcAddScore(reward);
+
             }
         }
 
@@ -115,14 +123,16 @@ public class Quest{
             //        playerWon = true;  
             //}
             PlayerData pd = p.GetComponent<PlayerData>();
-            if (pd != null && didPlayerWin(pd)) 
+            if (pd != null && didPlayerWin(pd)) {
                 TextManager.instance.RpcDisplayGreenMessageToPlayer(p, "you won");
+                pd.RpcAddScore(reward);
+            }
             //p.GetComponent<PlayerData>().RpcUpdateText("you have won this round");
             else
                 TextManager.instance.RpcDisplayGreenMessageToPlayer(p, "you lost");
         }
 
-        RewardPlayers();
+        //RewardPlayers();
         DestroyQuest();
     }
     public List<GameObject> getPlayers() {

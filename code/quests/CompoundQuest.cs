@@ -40,6 +40,24 @@ public class CompoundQuest:Quest{
         updateQuestMessage();
 
     }
+    public CompoundQuest(Quest q1, Quest q2,Quest q3) : base() {
+        players = q1.players;
+        GM = q1.GM;
+
+
+        quest1 = q1;
+        quest2 = q2;
+        quest3 = q3;
+
+        quest1.linkedQuest = true;
+        quest2.linkedQuest = true;
+        quest3.linkedQuest = true;
+
+        reward = quest1.reward + quest2.reward;
+
+        updateQuestMessage();
+
+    }
 
     public override void init() {
         //Debug.Log("created and quest");
@@ -81,8 +99,18 @@ public class CompoundQuest:Quest{
 
         if (quest3.isComplete) {
             //Debug.Log("OR quest of compound quest completed");
-            reward = quest3.reward;
-            winners = quest3.winners;
+            reward = quest1.reward + quest2.reward;
+            winners = quest1.winners;
+            List<GameObject> winnersToAdd = new List<GameObject>();
+            foreach (GameObject w in winners) {
+                if (quest2.winners.IndexOf(w) != -1) {//found someone who completed both quests
+                    winnersToAdd.Add(w);
+                }
+            }
+            winners.AddRange(winnersToAdd);
+            winners.AddRange(quest3.winners);
+
+           
             //winners.AddRange(quest2.winners);
             questCompleted();
             return;
@@ -91,12 +119,14 @@ public class CompoundQuest:Quest{
             //Debug.Log("both AND quests of compound quest completed");
             reward = quest1.reward + quest2.reward;
             winners = quest1.winners;
-            foreach (GameObject w in quest1.winners) {
+            List<GameObject> winnersToAdd = new List<GameObject>();
+            foreach (GameObject w in winners) {
                 if (quest2.winners.IndexOf(w) != -1) {//found someone who completed both quests
-                    winners.Add(w);
+                    winnersToAdd.Add(w);
                 }
             }
-
+            winners.AddRange(winnersToAdd);
+            winners.AddRange(quest3.winners);
             questCompleted();
             return;
         } else if (quest1.isComplete) {
@@ -130,6 +160,12 @@ public class CompoundQuest:Quest{
 
             }
         }
+    }
+    public override void questCompleted() {//make sure the quest discreption is up to date
+        quest1.questCompleted();
+        quest2.questCompleted();
+        quest3.questCompleted();
+        base.questCompleted();
     }
 
     public override void updateQuestMessage() {//make sure the quest discreption is up to date

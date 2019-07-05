@@ -38,6 +38,25 @@ public class ANDQuest:Quest{
         updateQuestMessage();
 
     }
+    public ANDQuest(Quest q1,Quest q2) : base() {
+        players = q1.players;
+        GM = q1.GM;
+
+  
+        quest1 = q1;
+        quest2 = q2;
+
+        quest1.linkedQuest = true;
+        quest2.linkedQuest = true;
+
+
+
+
+
+        reward = quest1.reward + quest2.reward;
+        updateQuestMessage();
+
+    }
 
     public override void init(){
         base.init();
@@ -72,16 +91,31 @@ public class ANDQuest:Quest{
 
     public override string getMessage(PlayerData PD = null) {
         //Debug.Log("updating from inside the and quest");
-        if (quest1.isComplete) {
-            if(quest1.winners.IndexOf(PD.gameObject)>=0)
-                return quest2.getMessage(PD);
+
+        //if (quest1.isComplete) {
+        //    if(quest1.winners.IndexOf(PD.gameObject)>=0)
+        //        return quest2.getMessage(PD);
+        //    return STRWAITFAILED;
+        //}
+        //if (quest2.isComplete) {
+        //    if (quest2.winners.IndexOf(PD.gameObject) >= 0)
+        //        return quest1.getMessage(PD);
+        //    return STRWAITFAILED;
+        //} 
+
+        if (quest1.didPlayerWin(PD)) {
+            return quest2.getMessage(PD);
+        }
+        if (quest2.didPlayerWin(PD)) {
+            return quest1.getMessage(PD);
+            
+        }
+        if (quest1.didPlayerLose(PD)) {
             return STRWAITFAILED;
         }
-        if (quest2.isComplete) {
-            if (quest2.winners.IndexOf(PD.gameObject) >= 0)
-                return quest1.getMessage(PD);
+        if (quest2.didPlayerLose(PD)) {
             return STRWAITFAILED;
-        } 
+        }
 
         return questMessage = quest1.getMessage(PD) + " AND " + quest2.getMessage(PD);
         
@@ -93,6 +127,20 @@ public class ANDQuest:Quest{
         if (quest1.didPlayerLose(PD) || quest2.didPlayerLose(PD))
             return true;
         return false;
+    }
+    public override bool didPlayerWin(PlayerData PD = null) {
+        if (PD == null)
+            return base.didPlayerWin();
+        if (quest1.didPlayerWin(PD) && quest2.didPlayerWin(PD))
+            return true;
+        return false;
+    }
+
+    public override void questCompleted() {//make sure the quest discreption is up to date
+        quest1.questCompleted();
+        quest2.questCompleted();
+
+        base.questCompleted();
     }
 
     public override void DestroyQuest() {

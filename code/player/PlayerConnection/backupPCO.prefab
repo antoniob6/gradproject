@@ -597,7 +597,7 @@ GameObject:
   - component: {fileID: 114022772865459408}
   - component: {fileID: 114265208278891814}
   m_Layer: 0
-  m_Name: PlayerConnectionObject (1)
+  m_Name: backupPCO
   m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -978,6 +978,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   TargetObject: {fileID: 0}
+  zoomLimit: 5
 --- !u!114 &114114227000179566
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1233,6 +1234,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e54cd9ba5ee6b4429ea4839825851f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  selectedWeapon: 0
+  weaponBeforeDeath: 0
 --- !u!114 &114236836610118648
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1530,14 +1533,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   recieveDamageEffect: {fileID: 0}
-  deathEffect: {fileID: 0}
   maxHealth: 10
   currentHealth: 0
-  enemyTag: Enemy
-  deathTag: Death
+  maxRecoveryTime: 0.5
+  deathCoolDownTime: 5
   destroyOnDeath: 0
-  animator: {fileID: 0}
+  initialPosition: {x: 0, y: 0}
   lastHitby: {fileID: 0}
+  didWeCheckDeath: 0
 --- !u!114 &114438511757717576
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1606,6 +1609,8 @@ MonoBehaviour:
   swordDamage: 2
   knockBackForce: 200
   sword: {fileID: 1634252299864418}
+  slashingEffect: {fileID: 0}
+  coolDownTime: 0.3
 --- !u!114 &114469602469617420
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1759,7 +1764,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5605480d8adc9e84b9e1f77d1a8950c0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  force: 5
+  coolDownRefernce: {fileID: 0}
+  coolDownTime: 5
 --- !u!114 &114606320699075228
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1891,7 +1897,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6efef083b4f00274292465ea31265e40, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spawnables: []
+  coolDownTime: 0.7
 --- !u!114 &114656558143327756
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -1984,9 +1990,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   spawnableCharacters:
   - {fileID: 1086191628742150, guid: c453a7d0d55fe7d45b36117461c9b4df, type: 2}
-  active: 0
   playerCamera: {fileID: 114084939648036348}
+  spawnBoxPrefab: {fileID: 0}
+  active: 0
   playerBoundingCollider: {fileID: 0}
+  PC: {fileID: 0}
+  facingRight: 1
+  selectedWeapon: 0
+  isAlive: 1
   PlayerName: Anonymous
 --- !u!114 &114709342475861038
 MonoBehaviour:
@@ -2101,22 +2112,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cb678eb132e23bb4abe464d8a70b88e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  PCO: {fileID: 114678485435145688}
   canvas: {fileID: 223620868572083526}
   scoreField: {fileID: 114469602469617420}
   objectiveField: {fileID: 114215466688592104}
   healthBar: {fileID: 114824813748578162}
-  spriteColor: {r: 1, g: 1, b: 1, a: 1}
   playerName: default
+  playerColor: {r: 0, g: 0, b: 0, a: 0}
   score: 0
   objectiveText: objectiveText
   hasDied: 0
   playerIsReady: 0
-  KilledEntityCount: 0
-  KilledPlayerCount: 0
-  spriteRenderer: {fileID: 0}
-  playerNameText: {fileID: 0}
+  killedEntityCount: 0
+  killedPlayerCount: 0
+  deathCount: 0
+  candyCount: 0
+  jumpCount: 0
+  roundKilledEntityCount: 0
+  roundKilledPlayerCount: 0
+  roundDeathCount: 0
+  roundCandyCount: 0
+  roundJumpCount: 0
   PRB: {fileID: 114946344310413342}
+  PSB: {fileID: 0}
+  playerWantsToSkip: 0
+  PAB: {fileID: 0}
+  FinalScoresImage: {fileID: 0}
+  playerWantsToPlayAgain: 0
 --- !u!114 &114824813748578162
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2255,6 +2276,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e48a6b469b5186f458b4f2d263e9198a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  coolDownTime: 0.3
 --- !u!114 &114906801062133976
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -2314,6 +2336,7 @@ MonoBehaviour:
   - {fileID: 223705472602933312}
   - {fileID: 223985591757194404}
   - {fileID: 223642289890504094}
+  ObjectsToDisable: []
 --- !u!114 &114970856981466612
 MonoBehaviour:
   m_ObjectHideFlags: 1
