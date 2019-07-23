@@ -22,4 +22,6 @@ https://github.com/antoniob6/gradproject/wiki
 
 ![welcome](https://github.com/antoniob6/gradproject/blob/master/Antonio%20Poster.jpg)
 
-the game picture in the bottom of the poster shows the last memory of the 6 players playing together, after which they all were saying their last goodbyes as the server was shutting down for the last time. It was put on the poster in order to eternally honor the hard work that was collectively put in the game.  
+the game picture in the bottom of the poster shows the last memory of the 6 players playing together, after which they all were saying their last goodbyes as the server was shutting down for the last time. 
+
+It was put on the poster in order to eternally honor the hard work that was collectively put in the game.  
